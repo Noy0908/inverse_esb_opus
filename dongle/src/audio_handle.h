@@ -15,6 +15,8 @@
 
 void usb_audio_init(void);
 
+void handle_audio_data(void);
+
 
 #endif
 

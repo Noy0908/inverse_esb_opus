@@ -5,6 +5,7 @@
         "${workspaceFolder}/dongle"
     ],
     "files.associations": {
-        "bluetooth.h": "c"
+        "bluetooth.h": "c",
+        "usb_audio.h": "c"
     }
 }

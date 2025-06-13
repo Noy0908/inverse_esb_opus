@@ -1,15 +1,14 @@
 #ifndef __DRV_FLASH_H__
 #define __DRV_FLASH_H__
 
-// #include <zephyr/kernel.h>
-// #include <zephyr/drivers/flash.h>
 #include <zephyr/storage/flash_map.h>
 
-#define TEST_PARTITION	storage_partition
+#define FLASH_PAGE_SIZE					0x1000
 
-#define TEST_PARTITION_OFFSET	FIXED_PARTITION_OFFSET(TEST_PARTITION)
-#define TEST_PARTITION_SIZE		FIXED_PARTITION_SIZE(TEST_PARTITION)
-#define TEST_PARTITION_DEVICE	FIXED_PARTITION_DEVICE(TEST_PARTITION)
+#define TEST_PARTITION	                storage_partition
+#define TEST_PARTITION_OFFSET	        FIXED_PARTITION_OFFSET(TEST_PARTITION)
+#define TEST_PARTITION_SIZE		        FIXED_PARTITION_SIZE(TEST_PARTITION)
+#define TEST_PARTITION_DEVICE	        FIXED_PARTITION_DEVICE(TEST_PARTITION)
 
 
 

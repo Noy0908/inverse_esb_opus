@@ -1,7 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/usb/usb_device.h>
-#include <zephyr/usb/class/usb_audio.h>
+#include <zephyr/net_buf.h>
 #include "audio_handle.h"
 #include "esb_handle.h"
 #include "drv_flash.h"
@@ -9,15 +8,15 @@
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 
-#define USB_AUDIO_STACK_SIZE        2048
-#define USB_AUDIO_PRIORITY          3
+#define AUDIO_HANDLE_STACK_SIZE        2048
+#define AUDIO_HANDLE_PRIORITY          3
 
 
 
 
 NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_STEREO, 8, net_buf_destroy);
 
-static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
+// static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
 
 extern struct k_msgq esb_queue;
 
@@ -46,10 +45,12 @@ static void mono_to_stereo(int16_t* src_audio, int frames, int16_t* dst_audio)
 }
 
 
-static void data_write(const struct device *dev)
+void handle_audio_data(void)
 {
 	// LOG_INF("data were requested from the device and may be send to the Host!");
 	static uint32_t timeCount = 0;
+	static uint32_t total_size = 0;
+
 	if(0 == (timeCount++ % 50))
 		leds_toggle();
 
@@ -59,7 +60,7 @@ static void data_write(const struct device *dev)
      
     struct net_buf *buf_out;
 
-	buf_out = net_buf_alloc(&pool_out, K_NO_WAIT);
+	buf_out = net_buf_alloc(&pool_out, K_MSEC(100));
 	if (!buf_out) 
 	{
 		LOG_ERR("Failed to allocate data buffer");
@@ -81,11 +82,12 @@ static void data_write(const struct device *dev)
     free_esb_slab_memory(frame_buffer);	
 
 	 /** USB audio driver handle the pcm stream*/
-	if (data_out_size == usb_audio_get_in_frame_size(dev)) 
+	// if (data_out_size == usb_audio_get_in_frame_size(dev)) 
+	if (data_out_size == FLASH_PAGE_SIZE) 
     {
-		ret = usb_audio_send(dev, buf_out, data_out_size);
+		ret = soc_flash_write(total_size, buf_out->data, data_out_size);
 		if (ret) {
-			LOG_WRN("USB TX failed, ret: %d", ret);
+			LOG_WRN("write flash failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
 		// else
@@ -99,6 +101,7 @@ static void data_write(const struct device *dev)
 	}
 }
 
+#if 0
 static void feature_update(const struct device *dev,
 			   const struct usb_audio_fu_evt *evt)
 {
@@ -140,32 +143,29 @@ void usb_audio_init(void)
 	LOG_INF("USB enabled");
 	LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
 }
-
+#endif
 
 
 static void esb_audio_data_handle(void *, void *, void *)
 {
-	int ret;
-	// static uint32_t total_size = 0;
+	soc_flash_init();
 
-	// soc_flash_init();
+	// if (!device_is_ready(mic_dev)) {
+	// 	LOG_ERR("Device USB Microphone is not ready");
+	// 	return;
+	// }
+	// LOG_INF("Found USB Microphone Device");
 
-	if (!device_is_ready(mic_dev)) {
-		LOG_ERR("Device USB Microphone is not ready");
-		return;
-	}
-	LOG_INF("Found USB Microphone Device");
+	// usb_audio_register(mic_dev, &mic_ops);
 
-	usb_audio_register(mic_dev, &mic_ops);
+	// ret = usb_enable(NULL);
+	// if (ret != 0) {
+	// 	LOG_ERR("Failed to enable USB");
+	// 	return;
+	// }
 
-	ret = usb_enable(NULL);
-	if (ret != 0) {
-		LOG_ERR("Failed to enable USB");
-		return;
-	}
-
-	LOG_INF("USB enabled");
-	LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
+	// LOG_INF("USB enabled");
+	// LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
 
     while(1)
     {
@@ -176,9 +176,9 @@ static void esb_audio_data_handle(void *, void *, void *)
 }
 
 
-K_THREAD_DEFINE(esb_audio_service, USB_AUDIO_STACK_SIZE,
+K_THREAD_DEFINE(esb_audio_service, AUDIO_HANDLE_STACK_SIZE,
                 esb_audio_data_handle, NULL, NULL, NULL,
-                K_PRIO_PREEMPT(USB_AUDIO_PRIORITY), 0, 0);
+                K_PRIO_PREEMPT(AUDIO_HANDLE_PRIORITY), 0, 0);
 
 
 

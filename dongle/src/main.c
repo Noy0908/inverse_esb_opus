@@ -17,8 +17,6 @@
 #include "esb_handle.h"
 #include "dvi_adpcm.h"
 #include "audio_handle.h"
-#include <zephyr/usb/usb_device.h>
-#include <zephyr/usb/class/usb_audio.h>
 
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
@@ -34,13 +32,7 @@ static const struct gpio_dt_spec leds[] = {
 	GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios),
 };
 
-BUILD_ASSERT(DT_SAME_NODE(DT_GPIO_CTLR(DT_ALIAS(led0), gpios),
-			  DT_GPIO_CTLR(DT_ALIAS(led1), gpios)) &&
-	     DT_SAME_NODE(DT_GPIO_CTLR(DT_ALIAS(led0), gpios),
-			  DT_GPIO_CTLR(DT_ALIAS(led2), gpios)) &&
-	     DT_SAME_NODE(DT_GPIO_CTLR(DT_ALIAS(led0), gpios),
-			  DT_GPIO_CTLR(DT_ALIAS(led3), gpios)),
-	     "All LEDs must be on the same port");
+
 
 
 static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
@@ -157,6 +149,14 @@ int main(void)
 	if (err) {
 		LOG_ERR("RX setup failed, err %d", err);
 		return err;
+	}
+
+	while(1)
+	{
+		/* Handle audio data */
+		handle_audio_data();
+
+		// LOG_DBG("Waiting for ESB events...");
 	}
 
 	/* return to idle thread */
