@@ -1,0 +1,10 @@
+# editors
+*.swp
+*~
+
+# build
+*/build*/
+build_*/**
+*.code-workspace
+.DS_Store
+**/.DS_Store

@@ -1,0 +1,15 @@
+#
+# Copyright (c) 2020 Nordic Semiconductor
+#
+# SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+#
+
+source "Kconfig.zephyr"
+
+menu "esb-ble-mouse-mpsl-circle-callback-timesync"
+
+config ESB_BT_LOG_LEVEL
+	int "Log level for this sample"
+	default 2
+
+endmenu
