@@ -12,6 +12,6 @@ menu "inverse esb transmiter"
 
 config ESB_BT_LOG_LEVEL
 	int "Log level for this sample"
-	default 2
+	default 3
 
 endmenu

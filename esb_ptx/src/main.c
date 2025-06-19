@@ -16,7 +16,7 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 #include <zephyr/types.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h> 
-#include <esb.h>
+// #include <esb.h>
 // #include "app_bt_hid.h"
 // #include "app_timeslot.h"
 // #include "app_esb.h"
@@ -28,7 +28,7 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 
 LOG_MODULE_REGISTER(main, CONFIG_ESB_BT_LOG_LEVEL);
 
-#define DEV_NUM			1
+#define DEV_NUM			2
 
 
 #define FW_VERSION		"1.2.9"
@@ -134,7 +134,7 @@ static void button_pressed(const struct device *dev, struct gpio_callback *cb, u
 {
 	button_flag = !button_flag;
 
-	LOG_INF("Button pressed at %d	 button_flag=%d\n", k_cycle_get_32(),button_flag);
+	// LOG_INF("Button pressed at %d	 button_flag=%d\n", k_cycle_get_32(),button_flag);
 
 	// wake up device and trigger micphone to work
 	if(button_flag)
@@ -146,6 +146,7 @@ static void button_pressed(const struct device *dev, struct gpio_callback *cb, u
 		{
 			set_radio_and_start();
 			radio_is_up = true;
+			LOG_INF("Radio start");
 		}
 	}
 	else
@@ -157,6 +158,7 @@ static void button_pressed(const struct device *dev, struct gpio_callback *cb, u
 		{
 			radio_stop();
 			radio_is_up = false;
+			LOG_INF("Radio stop");
 		}
 	}
 }
@@ -284,7 +286,7 @@ int main(void)
 		LOG_ERR("Cannot init buttons (err: %d)\n", err);
 	}
 
-	drv_audio_init();
+	// drv_audio_init();
 
 	err = app_event_manager_init();
 	if (err) {
