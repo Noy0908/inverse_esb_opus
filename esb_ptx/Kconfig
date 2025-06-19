@@ -8,7 +8,7 @@ source "Kconfig.zephyr"
 
 rsource "../lib/inv_esb_lib/Kconfig"
 
-menu "esb-ble-mouse-mpsl-circle-callback-timesync"
+menu "inverse esb transmiter"
 
 config ESB_BT_LOG_LEVEL
 	int "Log level for this sample"

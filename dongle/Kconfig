@@ -6,7 +6,9 @@
 
 source "Kconfig.zephyr"
 
-menu "Enhanced ShockBurst: Receiver"
+rsource "../lib/inv_esb_lib/Kconfig"
+
+menu "Inverse Enhanced ShockBurst: Receiver"
 
 config ESB_PRX_APP_LOG_LEVEL
 	int "Log level for the ESB PRX sample"

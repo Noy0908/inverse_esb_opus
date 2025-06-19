@@ -12,7 +12,8 @@ FILE(GLOB app_sources src/*.c)
 # NORDIC SDK APP START
 target_sources(app PRIVATE 
     ${app_sources}
-    ../lib/adpcm_lib/dvi_adpcm.c)
+    ../lib/adpcm_lib/dvi_adpcm.c
+    ../lib/inv_esb_lib/radio.c)
 # NORDIC SDK APP END
 
 zephyr_library_include_directories(../lib/inv_esb_lib)
