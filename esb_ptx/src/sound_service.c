@@ -2,10 +2,10 @@
 #include <zephyr/audio/dmic.h>
 #include <zephyr/logging/log.h>
 #include "sound_service.h"
-#include "app_esb.h"
+// #include "app_esb.h"
 #include "dvi_adpcm.h"
 #include "mic_work_event.h"
-#include "app_timeslot.h"
+// #include "app_timeslot.h"
 
 LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
@@ -51,15 +51,15 @@ static void mic_data_handle(void *, void *, void *)
 
 			if(esb_total_size >= CONFIG_ESB_MAX_PAYLOAD_LENGTH)
 			{
-				esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
+				// esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
 				memset(esb_tx_buf, 0, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
 
 				esb_total_size = 0;
 			}
 			else
 			{
-				if (get_timeslot_status()) 
-					pull_packet_from_tx_msgq();
+				// if (get_timeslot_status()) 
+				// 	pull_packet_from_tx_msgq();
 			}
 			
             free_audio_memory(buffer);

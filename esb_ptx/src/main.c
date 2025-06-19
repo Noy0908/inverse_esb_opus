@@ -17,9 +17,9 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 #include <zephyr/logging/log.h>
 #include <zephyr/drivers/gpio.h> 
 #include <esb.h>
-#include "app_bt_hid.h"
-#include "app_timeslot.h"
-#include "app_esb.h"
+// #include "app_bt_hid.h"
+// #include "app_timeslot.h"
+// #include "app_esb.h"
 #include "drv_mic.h"
 #include "mic_work_event.h"
 #include "sound_service.h"
@@ -61,19 +61,19 @@ static bool is_bt_connected = false;
 extern struct k_msgq m_msgq_tx_payloads; 
 
 
-void on_bt_callback(app_bt_event_t *event)
-{
-	switch(event->evt_type) {
-		case APP_BT_EVT_CONNECTED:
-			is_bt_connected = true;
-			LOG_INF("BT CONNECTED");
-			break;
-		case APP_BT_EVT_DISCONNECTED:
-			is_bt_connected = false;
-			LOG_INF("BT DISCONNECTED");
-			break;
-	}
-}
+// void on_bt_callback(app_bt_event_t *event)
+// {
+// 	switch(event->evt_type) {
+// 		case APP_BT_EVT_CONNECTED:
+// 			is_bt_connected = true;
+// 			LOG_INF("BT CONNECTED");
+// 			break;
+// 		case APP_BT_EVT_DISCONNECTED:
+// 			is_bt_connected = false;
+// 			LOG_INF("BT DISCONNECTED");
+// 			break;
+// 	}
+// }
 
 
 bool get_ble_status(void)
@@ -207,19 +207,19 @@ int main(void)
 	LOG_INF("ESB BLE Multiprotocol Example, version is %s!\r\n",FW_VERSION);
 	LOG_INF("Main thread priority is %d!\r\n",k_thread_priority_get(k_current_get()));
 
-	err = app_bt_init(on_bt_callback);
-	if (err) {
-		LOG_ERR("app_bt init failed (err %d)", err);
-		return err;
-	}
+	// err = app_bt_init(on_bt_callback);
+	// if (err) {
+	// 	LOG_ERR("app_bt init failed (err %d)", err);
+	// 	return err;
+	// }
 
-	err = app_esb_init(APP_ESB_MODE_PTX);
-	if (err) {
-		LOG_ERR("app_esb init failed (err %d)", err);
-		return err;
-	}
+	// err = app_esb_init(APP_ESB_MODE_PTX);
+	// if (err) {
+	// 	LOG_ERR("app_esb init failed (err %d)", err);
+	// 	return err;
+	// }
 	
-	timeslot_init();
+	// timeslot_init();
 
 #if 0
 	while (1) {		

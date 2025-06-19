@@ -2,7 +2,8 @@
     "iis.configDir": "",
     "cmake.sourceDirectory": "/Users/luoyu/git/projects/smart_remote/dongle",
     "nrf-connect.applications": [
-        "${workspaceFolder}/dongle"
+        "${workspaceFolder}/dongle",
+        "${workspaceFolder}/esb_ptx"
     ],
     "files.associations": {
         "bluetooth.h": "c",
