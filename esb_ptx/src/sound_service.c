@@ -3,7 +3,7 @@
 #include <zephyr/logging/log.h>
 #include "sound_service.h"
 // #include "app_esb.h"
-#include "dvi_adpcm.h"
+#include "../../lib/adpcm_lib/dvi_adpcm.h"
 #include "mic_work_event.h"
 // #include "app_timeslot.h"
 

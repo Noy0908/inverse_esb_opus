@@ -9,7 +9,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include "drv_mic.h"
-#include "dvi_adpcm.h"
+#include "../../../lib/adpcm_lib/dvi_adpcm.h"
 
 LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
 

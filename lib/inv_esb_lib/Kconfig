@@ -1,0 +1,80 @@
+menuconfig MULTIACK_RADIO
+	bool "Multiack Radio"	
+	select NRFX_PPI if HAS_HW_NRF_PPI
+	select NRFX_DPPI if HAS_HW_NRF_DPPIC
+	default n
+	help
+	  Enable MULTIACK_RADIO functionality.
+
+if MULTIACK_RADIO
+
+config MULTIACK_CENTRAL
+	bool "Central"
+	default y
+	help
+	  Enable central role functionality.
+
+config MULTIACK_PERIPH
+	bool "Peripheral"
+	default y
+	help
+	  Enable peripheral role functionality.
+
+config RADIO_PKT_CNT
+	bool "Central counts receive packets from periphs"
+	default n
+
+
+config MULTIACK_DEBUG_GPIO
+	bool "Debug GPIO"
+	depends on GPIO
+
+menu "Hardware selection (alter with care)"
+
+choice RADIO_SYS_TIMER
+	default RADIO_SYS_TIMER0
+	prompt "Timer to use for the RADIO system timer"
+
+config RADIO_SYS_TIMER0
+	bool "TIMER0"
+	depends on HAS_HW_NRF_TIMER0
+	select NRFX_TIMER0
+
+config RADIO_SYS_TIMER1
+	bool "TIMER1"
+	depends on HAS_HW_NRF_TIMER1
+	select NRFX_TIMER1
+
+config RADIO_SYS_TIMER2
+	bool "TIMER2"
+	depends on HAS_HW_NRF_TIMER2
+	select NRFX_TIMER2
+
+config RADIO_SYS_TIMER3
+	bool "TIMER3"
+	depends on HAS_HW_NRF_TIMER3
+	select NRFX_TIMER3
+
+config RADIO_SYS_TIMER4
+	bool "TIMER4"
+	depends on HAS_HW_NRF_TIMER4
+	select NRFX_TIMER4
+
+endchoice
+
+config RADIO_TIMER_INSTANCE
+	int
+	default 0 if RADIO_SYS_TIMER0
+	default 1 if RADIO_SYS_TIMER1
+	default 2 if RADIO_SYS_TIMER2
+	default 3 if RADIO_SYS_TIMER3
+	default 4 if RADIO_SYS_TIMER4
+	default 0
+
+config APP_LOG_LEVEL
+	int "Log level for multiack central sample"
+	default 4
+
+endmenu
+
+endif

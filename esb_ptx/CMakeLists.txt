@@ -18,15 +18,13 @@ target_sources(app PRIVATE
   src/sound_service.c
   src/drivers/drv_mic.c
   src/events/mic_work_event.c
-  # src/modules/app_bt_hid.c
-  # src/modules/app_timeslot.c
-  # src/modules/app_esb.c
-  # ../common/circle_test/circle_test.c
-  ../common/dvi_adpcm.c
+  ../lib/adpcm_lib/dvi_adpcm.c
+  ../lib/inv_esb_lib/radio.c
 )
+
 # NORDIC SDK APP END
 zephyr_library_include_directories(src/drivers/)
 zephyr_library_include_directories(src/events/)
-# zephyr_library_include_directories(src/modules/)
-zephyr_library_include_directories(../common)
-# zephyr_library_include_directories(../common/circle_test)
+zephyr_library_include_directories(../lib/adpcm_lib)
+zephyr_library_include_directories(../lib/inv_esb_lib)
+
