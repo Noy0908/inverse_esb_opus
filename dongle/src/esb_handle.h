@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "../../lib/inv_esb_lib/radio.h"
+#include "../../lib/inv_esb_lib/radio_config.h"
 
 #define MAX_SAMPLE_RATE             16000
 #define SAMPLE_BIT_WIDTH            16
@@ -20,7 +22,7 @@
 #define ESB_BLOCK_COUNT             600
 
 
-int esb_initialize(void);
+void inverse_esb_init(void);
 
 void esb_buffer_handle(void);
 

@@ -16,6 +16,7 @@ endif()
 target_sources(app PRIVATE
   src/main.c
   src/sound_service.c
+  src/esb_handler.c
   src/drivers/drv_mic.c
   src/events/mic_work_event.c
   ../lib/adpcm_lib/dvi_adpcm.c

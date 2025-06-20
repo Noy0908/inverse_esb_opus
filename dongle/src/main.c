@@ -17,15 +17,14 @@
 #include "esb_handle.h"
 #include "dvi_adpcm.h"
 #include "audio_handle.h"
-#include "../../lib/inv_esb_lib/radio.h"
-#include "../../lib/inv_esb_lib/radio_config.h"
+
 
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 #define FW_VERSION				"1.2.1"
 
-#define DEV_NUM					0xFFFF //0xFFFF being central
+
 
 dvi_adpcm_state_t    m_adpcm_state;
 
@@ -39,23 +38,6 @@ static const struct gpio_dt_spec leds[] = {
 
 // static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
 // 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17);
-
-/*************inverse esb variables ******************************************************/
-
-static bool new_pkt_received;
-
-static radio_power_t tx_power = RADIO_TX_POWER_4DBM;
-
-//32 bytes packet
-static uint8_t tx_packet[] = { 1,  2,  3,  4,  5,  6,  7,  8, 
-								9, 10, 11, 12, 13, 14, 15, 16,
-								17, 18, 19, 20, 21, 22, 23, 24,
-								25, 26, 27, 28, 29, 30, 31, 32} ;                    /**< Packet to transmit. */
-
-static uint8_t rx_packet[NUM_OF_PERIPHS][MAX_PAYLOAD_SIZE];
-
-
-/*****************************************************************************************/
 
 
 static int leds_init(void)
@@ -80,6 +62,7 @@ static int leds_init(void)
 }
 
 
+
 int leds_toggle(void)
 {
 	// for (size_t i = 0; i < ARRAY_SIZE(leds); i++) 
@@ -90,8 +73,21 @@ int leds_toggle(void)
 	return 0;
 }
 
+int led_on_off(uint8_t idx, bool on)
+{
+	if (idx >= ARRAY_SIZE(leds)) {
+		LOG_ERR("Invalid LED index %u", idx);
+		return -EINVAL;
+	}
 
+	int err = gpio_pin_set(leds[0].port, leds[idx].pin, on ? 1 : 0);
+	if (err) {
+		LOG_ERR("Failed to set LED%u state, err %d", idx, err);
+		return err;
+	}
 
+	return 0;
+}
 
 
 int clocks_start(void)
@@ -128,62 +124,6 @@ int clocks_start(void)
 }
 
 
-
-static void radio_evt_cb(radio_evt_t const * p_event)
-{
-	switch(p_event->evt_id) {
-	case RADIO_EVENT_CENTRAL_DATA_RCV:
-		if (p_event->data_len) {
-			// Toggle one of the LEDs.
-			if (p_event->periph_num == 1) {
-				gpio_pin_set(leds[0].port, leds[0].pin, rx_packet[0][0] & 0x1);
-			} else if (p_event->periph_num == 2) {
-				gpio_pin_set(leds[0].port, leds[1].pin, rx_packet[1][0] & 0x1);
-			} 
-			// else if (p_event->periph_num == 3) {
-			// 	gpio_pin_set(led_port, led_pins[2], rx_packet[2][0] & 0x1);
-			// } else if (p_event->periph_num == 4) {
-			// 	gpio_pin_set(led_port, led_pins[3], rx_packet[3][0] & 0x1);
-			// }
-			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, rx_packet[p_event->periph_num - 1][0]);
-		}
-		new_pkt_received = true;
-		break;
-	case RADIO_EVENT_CENTRAL_POLL_END:
-		if (new_pkt_received) {
-			new_pkt_received = false;
-
-			tx_packet[0]++;
-		}
-		break;
-	default:
-		break;
-	}
-}
-
-
-static void init_radio_config(void)
-{
-	radio_init_t radio_init;
-	radio_address_t address = RADIO_ADDR_CONFIG;
-
-	radio_init.num_subevts		= NUM_OF_SUBEVTS;
-	radio_init.num_periphs		= NUM_OF_PERIPHS;
-	radio_init.dev_num			= DEV_NUM;
-	radio_init.mode				= PHY_MODE;
-	radio_init.event_callback	= radio_evt_cb;
-	radio_init.address			= address;
-	radio_init.tx_power			= tx_power;
-	radio_init.tx_buf			= tx_packet;
-	radio_init.rx_buf			= &rx_packet[0][0];
-	radio_init.tx_length		= CENTRAL_PKT_SIZE;
-	radio_init.channel_tab		= RF_CHANNEL_TAB;
-	radio_init.channel_tab_size	= sizeof(RF_CHANNEL_TAB);
-	radio_init.rtc_tick_val		= CENTRAL_RTC_EVENT_TICKS;
-	radio_init.scan_timer_val	= CENTRAL_TIMER_SCAN_US;
- 
-	radio_setup(&radio_init);
-}
 
 
 int main(void)
@@ -228,7 +168,7 @@ int main(void)
 	// 	return err;
 	// }
 
-	init_radio_config();
+	inverse_esb_init();
 
 	radio_start_poll();
 

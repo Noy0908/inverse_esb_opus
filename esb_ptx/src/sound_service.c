@@ -2,11 +2,8 @@
 #include <zephyr/audio/dmic.h>
 #include <zephyr/logging/log.h>
 #include "sound_service.h"
-// #include "app_esb.h"
-#include "../../lib/adpcm_lib/dvi_adpcm.h"
-#include "../../lib/inv_esb_lib/radio.h"
 #include "mic_work_event.h"
-// #include "app_timeslot.h"
+#include "esb_handler.h"
 
 LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
@@ -16,11 +13,9 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 /* Milliseconds to wait for a block to be read. */
 #define READ_TIMEOUT            1000
 
-
+static bool radio_is_up;
 static dvi_adpcm_state_t    m_adpcm_state;
 
-/** this pointer variable used for transport the message queue to ESB thread.*/
-// void *block_ptr = NULL;
 
 static void mic_data_handle(void *, void *, void *)
 {
@@ -76,9 +71,9 @@ static void mic_data_handle(void *, void *, void *)
 
 
 
-K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
-                mic_data_handle, NULL, NULL, NULL,
-                K_PRIO_PREEMPT(7), 0, 0);
+// K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
+//                 mic_data_handle, NULL, NULL, NULL,
+//                 K_PRIO_PREEMPT(7), 0, 0);
 
 
 extern void turn_on_off_led(bool onOff);
@@ -89,21 +84,36 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 		struct mic_work_event *event = cast_mic_work_event(aeh);
 		if (event->type == MIC_STATUS_START) 
 		{
-            LOG_INF("Micphone start to work!");
-			drv_mic_start();
+			/** radio work imediately in case of loss audio packet */
+			if(!radio_is_up)
+			{
+				inverse_esb_start();
+				radio_is_up = true;
+				LOG_INF("Radio start");
+			}
 
-			k_thread_resume(sound_service);
+            // LOG_INF("Micphone start to work!");
+			// drv_mic_start();
+
+			// k_thread_resume(sound_service);
 			
-			turn_on_off_led(true);
+			// turn_on_off_led(true);
 		}
 		else if(event->type == MIC_STATUS_STOP)
 		{
             LOG_INF("Micphone stop to work!");
-			drv_mic_stop();
+			// drv_mic_stop();
 
-			k_thread_suspend(sound_service);
+			// k_thread_suspend(sound_service);
 
-            turn_on_off_led(false);
+            // turn_on_off_led(false);
+			/** radio work longer to  send the rest audio frame */
+			if(radio_is_up)
+			{
+				radio_stop();
+				radio_is_up = false;
+				LOG_INF("Radio stop");
+			}
 		}
 
 		return true;
