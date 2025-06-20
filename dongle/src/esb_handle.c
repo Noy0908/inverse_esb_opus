@@ -1,6 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <esb.h>
+// #include <esb.h>
 #include "dvi_adpcm.h"
 #include "esb_handle.h"
 
@@ -24,7 +24,7 @@ void *block_ptr = NULL;
 
 extern dvi_adpcm_state_t m_adpcm_state;
 
-
+#if 0
 static void event_handler(struct esb_evt const *event)
 {
 	switch (event->evt_id) {
@@ -95,7 +95,7 @@ int esb_initialize(void)
 
 	return 0;
 }
-
+#endif
 
 // static void mono_to_stereo(int16_t* src_audio, int frames, int16_t* dst_audio) 
 // {
@@ -109,6 +109,7 @@ int esb_initialize(void)
 
 void esb_buffer_handle(void)
 {
+#if 0
     int err = 0;
     int frame_size = 0;
 	uint8_t adpcm_index = 0;
@@ -150,6 +151,7 @@ void esb_buffer_handle(void)
     {
         LOG_ERR("Error while reading esb rx packet");
     }
+#endif
 }
 
 

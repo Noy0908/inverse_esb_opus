@@ -176,9 +176,9 @@ static void esb_audio_data_handle(void *, void *, void *)
 }
 
 
-K_THREAD_DEFINE(esb_audio_service, AUDIO_HANDLE_STACK_SIZE,
-                esb_audio_data_handle, NULL, NULL, NULL,
-                K_PRIO_PREEMPT(AUDIO_HANDLE_PRIORITY), 0, 0);
+// K_THREAD_DEFINE(esb_audio_service, AUDIO_HANDLE_STACK_SIZE,
+//                 esb_audio_data_handle, NULL, NULL, NULL,
+//                 K_PRIO_PREEMPT(AUDIO_HANDLE_PRIORITY), 0, 0);
 
 
 

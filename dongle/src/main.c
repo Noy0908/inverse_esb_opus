@@ -11,7 +11,7 @@
 #include <zephyr/irq.h>
 #include <zephyr/logging/log.h>
 #include <nrf.h>
-#include <esb.h>
+// #include <esb.h>
 #include <zephyr/kernel.h>
 #include <zephyr/types.h>
 #include "esb_handle.h"
@@ -37,8 +37,8 @@ static const struct gpio_dt_spec leds[] = {
 };
 
 
-static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
-	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17);
+// static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
+// 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17);
 
 /*************inverse esb variables ******************************************************/
 
@@ -123,7 +123,7 @@ int clocks_start(void)
 		}
 	} while (err);
 
-	LOG_DBG("HF clock started, fw_version is %s", FW_VERSION);
+	// LOG_DBG("HF clock started, fw_version is %s", FW_VERSION);
 	return 0;
 }
 
@@ -192,10 +192,10 @@ int main(void)
 
 	LOG_INF("Enhanced ShockBurst prx sample");
 
-	err = clocks_start();
-	if (err) {
-		return err;
-	}
+	// err = clocks_start();
+	// if (err) {
+	// 	return err;
+	// }
 
 	err = leds_init();
 	if (err) {
@@ -232,13 +232,15 @@ int main(void)
 
 	radio_start_poll();
 
-	while(1)
-	{
-		/* Handle audio data */
-		handle_audio_data();
+	LOG_DBG("Inverse esb dongle demo, fw_version is %s", FW_VERSION);
 
-		// LOG_DBG("Waiting for ESB events...");
-	}
+	// while(1)
+	// {
+	// 	/* Handle audio data */
+	// 	handle_audio_data();
+
+	// 	// LOG_DBG("Waiting for ESB events...");
+	// }
 
 	/* return to idle thread */
 	return 0;
