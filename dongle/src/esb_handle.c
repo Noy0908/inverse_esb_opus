@@ -101,7 +101,7 @@ void inverse_esb_init(void)
 	radio_init.tx_length		= CENTRAL_PKT_SIZE;
 	radio_init.channel_tab		= RF_CHANNEL_TAB;
 	radio_init.channel_tab_size	= sizeof(RF_CHANNEL_TAB);
-	radio_init.rtc_tick_val		= CENTRAL_RTC_EVENT_TICKS;
+	// radio_init.rtc_tick_val		= CENTRAL_RTC_EVENT_TICKS;
 	radio_init.scan_timer_val	= CENTRAL_TIMER_SCAN_US;
  
 	radio_setup(&radio_init);

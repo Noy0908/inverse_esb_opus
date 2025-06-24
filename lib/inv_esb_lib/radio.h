@@ -122,8 +122,6 @@ typedef struct
 
 	const uint8_t *		channel_tab;
 	size_t			channel_tab_size;
-
-	uint32_t		rtc_tick_val;
 	uint32_t		scan_timer_val;
 	uint32_t		periph_tx_timer_val;
 	uint32_t		periph_rx_search_rtc_val;

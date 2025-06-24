@@ -80,7 +80,7 @@ static uint8_t m_R[MAX_SUBEVTS][MAX_PERIPH_BIT_ARRAY_SIZE];
 static uint8_t m_S;
 #endif
 
-static uint32_t m_rtc_tick_val;
+// static uint32_t m_rtc_tick_val;
 static uint32_t m_scan_timer_val;
 static uint32_t m_periph_tx_timer_val;
 static uint32_t m_periph_rx_search_rtc_val;
@@ -368,19 +368,27 @@ __INLINE static void radio_disable(void)
 
 
 #ifdef CONFIG_MULTIACK_PERIPH
-__INLINE static void on_delay_timer_expired(void)
+void inv_esb_start_tx(void *data, uint8_t len)
 {
 	//Set dma_buf to m_tx_buf
-	if (m_tx_length) {
-		memcpy(&dma_buf[3], m_tx_buf, m_tx_length);
+	if (len <= MAX_PACKET_LENGTH) {
+		memcpy(&dma_buf[3], data, len);
 	}
 
 	dma_buf[2] = m_S;
-	dma_buf[1] = m_tx_length;
+	dma_buf[1] = len;
 	dma_buf[0] = m_dev_num;		//periph_num
  
 	//Set TX state in advance
 	m_radio_state = PERIPH_TX_STATE;
+
+	//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
+	nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
+	//Enable PPI channel : ppi_ch_timer_compare0_radio_txen
+	nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_txen));
+	//Start radio timer
+	radio_timer_clear_start(m_periph_tx_timer_val * m_dev_num);
+	
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
 #endif
@@ -455,7 +463,7 @@ static void rtc_periph_event_handler(void)
 		else
 		{
 			radio_rtc_clear_count();
-			radio_rtc_compare0_set(m_rtc_tick_val);
+			radio_rtc_compare0_set(RADIO_RTC_EVENT_TICKS);
 			loss_cnt++;
 			//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
 			nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
@@ -663,7 +671,7 @@ static void on_periph_disabled(void)
 			//nrfx_gppi_channels_disable_all();  //<---
 			return;	
 		}
-				
+		/** Radio generate irq packet received finished */	
 		if ((NRF_RADIO->CRCSTATUS & (RADIO_CRCSTATUS_CRCSTATUS_CRCOk << RADIO_CRCSTATUS_CRCSTATUS_Pos)) &&
 		    !dma_buf[0])  // check also it is sent by central but not the other peripherals
 		{
@@ -710,13 +718,8 @@ static void on_periph_disabled(void)
 				radio_rtc_compare0_set(m_periph_rtc_tick_adj_val);
 				//Stop radio timer            
 				radio_timer_stop();
-				on_delay_timer_expired();
-				//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
-				nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
-				//Enable PPI channel : ppi_ch_timer_compare0_radio_txen
-				nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_txen));
-				//Start radio timer
-				radio_timer_clear_start(m_periph_tx_timer_val * m_dev_num);
+				/** start transmit packet */
+				inv_esb_start_tx(m_tx_buf, m_tx_length);
 			}
 
 			m_radio_event.evt_id = RADIO_EVENT_PERIPH_POLL_RCV;
@@ -758,7 +761,7 @@ static void on_periph_disabled(void)
 
 void radio_start_poll(void)
 {
-	radio_rtc_start(m_rtc_tick_val);
+	radio_rtc_start(RADIO_RTC_EVENT_TICKS);
 }
 
 
@@ -987,13 +990,6 @@ int radio_setup(const radio_init_t *init)
 		m_channel_tab_size = init->channel_tab_size;
 	}
 
-	if (unlikely(!init->rtc_tick_val ||
-		     init->rtc_tick_val > NRF_RTC_COUNTER_MAX)) {
-		return -EINVAL;
-	} else {
-		m_rtc_tick_val = init->rtc_tick_val;
-	}
-
 	if (unlikely(!init->scan_timer_val)) {
 		return -EINVAL;
 	} else {
@@ -1076,7 +1072,7 @@ int radio_setup(const radio_init_t *init)
 	// Configure radio address registers
 	m_radio_addr = init->address;
 	base_addr_fill_in();
-    NRF_RADIO->PACKETPTR    = (uint32_t) dma_buf;
+    NRF_RADIO->PACKETPTR    = (uint32_t)dma_buf;
 	radio_ppi_init();
 	radio_timer_init();
 	radio_rtc_init();

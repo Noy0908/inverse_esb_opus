@@ -24,6 +24,8 @@ static uint8_t			tx_packet[] = { 0, '1', '2', '3', '4', '5', '6','7', \
 static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
 
+extern void turn_on_off_led(bool onOff);
+
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
 	switch(p_event->evt_id) {
@@ -86,7 +88,7 @@ void inverse_esb_init(void)
 	radio_init.tx_length			= PERIPH_PKT_SIZE;
 	radio_init.channel_tab			= RF_CHANNEL_TAB;
 	radio_init.channel_tab_size		= sizeof(RF_CHANNEL_TAB);
-	radio_init.rtc_tick_val			= PERIPH_RTC_RX_OPERATE_PERIOD;
+	// radio_init.rtc_tick_val			= PERIPH_RTC_RX_OPERATE_PERIOD;
 	radio_init.scan_timer_val		= PERIPH_TIMER_SCAN_US;
 	radio_init.periph_tx_timer_val		= PERIPH_TIMER_TX_DELAY_PERIOD;
 	radio_init.periph_rx_search_rtc_val	= PERIPH_RTC_RX_SEARCH_PERIOD;

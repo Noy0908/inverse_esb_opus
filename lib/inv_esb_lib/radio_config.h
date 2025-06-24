@@ -51,10 +51,11 @@
 
 #define RF_CHAN_TAB_SIZE			               8
 
-#define CENTRAL_RTC_EVENT_TICKS					   200    // 200us per tick
+// #define CENTRAL_RTC_EVENT_TICKS					   100    // 100us per tick
 
-#define PERIPH_RTC_EVENT_TICKS					   200
-				    
+// #define PERIPH_RTC_EVENT_TICKS					   100    // 100us per tick
+#define RADIO_RTC_EVENT_TICKS		               100    // 10us per tick
+
 
 // #define CENTRAL_TIMER_SCAN_US		               88000 //88ms, 1 us per tick		
 // #define PERIPH_TIMER_SCAN_US		               100000 //100ms, 1 us per tick			
@@ -65,11 +66,12 @@
 #define RTC_ADJ						               4
 
 
-#define PERIPH_RTC_RX_OPERATE_PERIOD		      PERIPH_RTC_EVENT_TICKS
+#define PERIPH_RTC_RX_OPERATE_PERIOD		      RADIO_RTC_EVENT_TICKS
 #define PERIPH_RTC_RX_SEARCH_PERIOD			      PERIPH_RTC_RX_OPERATE_PERIOD* (RF_CHAN_TAB_SIZE +1)
 #define PERIPH_RTC_RX_OPERATE_ADJ_PERIOD	      PERIPH_RTC_RX_OPERATE_PERIOD - RTC_ADJ
 
 #define PERIPH_TIMER_TX_DELAY_OFFSET		      100
+/** timeslot for one peripheral */
 #define PERIPH_TIMER_TX_DELAY_PERIOD		      480  //us
 
 #define CENTRAL_PKT_SIZE			               2
