@@ -15,17 +15,6 @@ LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 static bool new_pkt_received;
 
-// static radio_power_t tx_power = RADIO_TX_POWER_4DBM;
-static radio_power_t tx_power = RADIO_TX_POWER_0DBM;
-
-//32 bytes packet
-static uint8_t tx_packet[] = { 1,  2,  3,  4,  5,  6,  7,  8, 
-								9, 10, 11, 12, 13, 14, 15, 16,
-								17, 18, 19, 20, 21, 22, 23, 24,
-								25, 26, 27, 28, 29, 30, 31, 32} ;                    /**< Packet to transmit. */
-
-static uint8_t rx_packet[NUM_OF_PERIPHS][MAX_PAYLOAD_SIZE];
-
 
 /*****************************************************************************************/
 
@@ -56,18 +45,11 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 		if (p_event->data_len) {
 			// Toggle one of the LEDs.
 			if (p_event->periph_num == 1) {
-				// gpio_pin_set(leds[0].port, leds[0].pin, rx_packet[0][0] & 0x1);
-				led_on_off(0, rx_packet[0][0] & 0x1);
+				led_on_off(0, p_event->data[0] & 0x1);
 			} else if (p_event->periph_num == 2) {
-				// gpio_pin_set(leds[0].port, leds[1].pin, rx_packet[1][0] & 0x1);
-				led_on_off(1, rx_packet[1][0] & 0x1);
+				led_on_off(1, p_event->data[1] & 0x1);
 			} 
-			// else if (p_event->periph_num == 3) {
-			// 	gpio_pin_set(led_port, led_pins[2], rx_packet[2][0] & 0x1);
-			// } else if (p_event->periph_num == 4) {
-			// 	gpio_pin_set(led_port, led_pins[3], rx_packet[3][0] & 0x1);
-			// }
-			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, rx_packet[p_event->periph_num - 1][0]);
+			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
 		}
 		new_pkt_received = true;
 		break;
@@ -75,7 +57,7 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 		if (new_pkt_received) {
 			new_pkt_received = false;
 
-			tx_packet[0]++;
+			increase_poll_index();
 		}
 		break;
 	default:
@@ -87,23 +69,11 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 void inverse_esb_init(void)
 {
 	radio_init_t radio_init;
-	radio_address_t address = RADIO_ADDR_CONFIG;
 
-	radio_init.num_subevts		= NUM_OF_SUBEVTS;
-	radio_init.num_periphs		= NUM_OF_PERIPHS;
 	radio_init.dev_num			= DEV_NUM;
 	radio_init.mode				= PHY_MODE;
 	radio_init.event_callback	= radio_evt_cb;
-	radio_init.address			= address;
-	radio_init.tx_power			= tx_power;
-	radio_init.tx_buf			= tx_packet;
-	radio_init.rx_buf			= &rx_packet[0][0];
-	radio_init.tx_length		= CENTRAL_PKT_SIZE;
-	radio_init.channel_tab		= RF_CHANNEL_TAB;
-	radio_init.channel_tab_size	= sizeof(RF_CHANNEL_TAB);
-	// radio_init.rtc_tick_val		= CENTRAL_RTC_EVENT_TICKS;
-	radio_init.scan_timer_val	= CENTRAL_TIMER_SCAN_US;
- 
+
 	radio_setup(&radio_init);
 }
 

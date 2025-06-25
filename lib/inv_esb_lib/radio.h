@@ -9,15 +9,19 @@
 #include "radio_config.h"
 
 #define MAX_SUBEVTS		1
+
 #define MAX_PERIPHS		2
 
 #define MAX_CHANNEL_TAB		16
 
 #define MAX_PAYLOAD_SIZE	64
 
-#define MAX_PACKET_LENGTH	(ROUND_UP(MAX_PERIPHS, 8) / 8 + MAX_PAYLOAD_SIZE)
+#define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
+
+#define MAX_PACKET_LENGTH	(PERIPH_BM_SIZE + MAX_PAYLOAD_SIZE)
 
 #define	RADIO_RTC			NRF_RTC0
+
 #define RADIO_RTC_IRQn		RTC0_IRQn
 
 
@@ -67,7 +71,7 @@ typedef enum
     RADIO_EVENT_CENTRAL_DATA_RCV,   /**< Event triggered on Central recieved data packet */
     RADIO_EVENT_PERIPH_POLL_RCV,    /**< Event triggered on Peripheral recieved poll packet.  */
     RADIO_EVENT_PERIPH_POLL_NOT_RCV,
-    RADIO_EVENT_PERIPH_DATA_SND     /**< Event triggered on Peripheral sent data packet */
+    // RADIO_EVENT_PERIPH_DATA_SND     /**< Event triggered on Peripheral sent data packet */
 
 } radio_evt_id_t;
 
@@ -81,15 +85,26 @@ rx_states_t;
 
 typedef struct
 {
-	radio_evt_id_t		evt_id;                     //!< Enhanced ShockBurst event ID.
+	radio_evt_id_t	evt_id;                     //!< Enhanced ShockBurst event ID.
 	uint8_t			chan_cnt;                  //!< channel count
 #ifdef CONFIG_MULTIACK_CENTRAL
 	uint16_t		subevt_num;
 	uint8_t			periph_num;
 #endif
+	uint8_t			data[MAX_PAYLOAD_SIZE];    //!< Data received in the event.
 	uint8_t			data_len;
 } radio_evt_t;
 
+
+/** @brief Enhanced ShockBurst payload.
+ *
+ *  The payload is used both for transmissions and for acknowledging a
+ *  received packet with a payload.
+ */
+struct inv_esb_payload {
+	uint8_t length; /**< Length of the packet when not in DPL mode. */
+	uint8_t data[MAX_PAYLOAD_SIZE]; /**< The payload data. */
+};
 
 typedef void (*event_callback_t ) (radio_evt_t const * p_event);
 
@@ -98,45 +113,39 @@ typedef struct
 	uint64_t logic_addr_0;		/**< Logic address 0 encoded in little endian. */
 } radio_address_t;
 
-#define	RADIO_ADDR_DEFAULT				\
-{							\
-	.logic_addr_0		= 0xE7E7E7E7E7,		\
-}
 
 typedef struct
 {
-	uint16_t		num_subevts;
-	uint8_t			num_periphs;
-	uint16_t		dev_num;  /* FFFF being central,
-					   * for peripherials,
-					   * DEV_NUM = (SUBEVT_NUM << 8) + PERIPH_NUM
-					   */
-	radio_address_t		address;
-	radio_power_t 		tx_power;
+	/* FFFF being central, for peripherials,
+	*  DEV_NUM = (SUBEVT_NUM << 8) + PERIPH_NUM
+	*/
+	uint16_t			dev_num;  
 	radio_modes_t		mode;
 	event_callback_t 	event_callback;
-	uint8_t * 		tx_buf;
-	uint8_t *		rx_buf;
-	uint8_t			tx_length;
-	uint16_t *		periph_cnt;   //peripheral counts, the last element being total count  
-
-	const uint8_t *		channel_tab;
-	size_t			channel_tab_size;
-	uint32_t		scan_timer_val;
-	uint32_t		periph_tx_timer_val;
-	uint32_t		periph_rx_search_rtc_val;
-	uint32_t		periph_rtc_tick_adj_val;
+	uint16_t *			periph_cnt;   //peripheral counts, the last element being total count  
 } radio_init_t;
 
 
 int radio_setup(const radio_init_t *init);
+
 int radio_set_dev_num(uint16_t dev_num);
+
 void radio_start_poll(void);
+
+void increase_poll_index(void);
+
+int pull_packet_from_tx_msgq(void);
+
+int inv_esb_package_enqueue(uint8_t *buf, uint32_t length);
+
+void delete_tx_item_from_queue(void);
+
 void radio_start_receive(void);
+
 void radio_stop(void);
-uint8_t radio_get_poll_packet(void);
 
 int8_t get_rssi(void);
+
 bool get_crc(void);
 
 

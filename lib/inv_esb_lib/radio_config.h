@@ -17,7 +17,7 @@
 
 #define  NUM_OF_PERIPHS	      2
 
-#define  TUNE_MODE            false
+// #define  TUNE_MODE            false
 
 
 /**
@@ -51,9 +51,7 @@
 
 #define RF_CHAN_TAB_SIZE			               8
 
-// #define CENTRAL_RTC_EVENT_TICKS					   100    // 100us per tick
 
-// #define PERIPH_RTC_EVENT_TICKS					   100    // 100us per tick
 #define RADIO_RTC_EVENT_TICKS		               100    // 10us per tick
 
 

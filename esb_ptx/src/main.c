@@ -63,7 +63,7 @@ static const struct gpio_dt_spec leds[] = {
 };
 
 
-extern struct k_msgq m_msgq_tx_payloads; 
+// extern struct k_msgq m_msgq_tx_payloads; 
 
 
 static int leds_init(void)
@@ -187,6 +187,8 @@ int main(void)
 	}
 
 	inverse_esb_init();
+
+	
 
 	LOG_INF("ESB BLE Multiprotocol Example, version is %s!\r\n",FW_VERSION);
 	LOG_INF("Main thread priority is %d!\r\n",k_thread_priority_get(k_current_get()));
