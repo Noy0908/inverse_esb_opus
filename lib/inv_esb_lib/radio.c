@@ -464,6 +464,8 @@ static void on_central_end(void)
 			uint8_t len = dma_buf[1];
 			uint8_t pid = dma_buf[2];
 
+			NRF_RADIO->TASKS_START =1;  //restart rx
+
 			if (len > MAX_PAYLOAD_SIZE) 
 			{
 				err = -EMSGSIZE;
@@ -507,24 +509,6 @@ static void on_central_end(void)
 		#ifdef CONFIG_RADIO_PKT_CNT 
 			 m_periph_cnt[periph_no-1]++;
 		#endif	 
-
-		 	NRF_RADIO->TASKS_START =1;  //restart rx
-
-			if (!err) {
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-				gpio_pin_toggle(dbg_port, PIN_DBG_01);
-#endif
-
-				radio_evt_t event;
-
-				//Callback to application
-				event.evt_id = RADIO_EVENT_CENTRAL_DATA_RCV;
-				event.chan_cnt = m_rf_chan_idx;
-				event.subevt_num = subevts_no;
-				event.periph_num = periph_no;
-				event.data_len = len;
-				m_event_callback(&event);
-			}
 		}
 	}
 }

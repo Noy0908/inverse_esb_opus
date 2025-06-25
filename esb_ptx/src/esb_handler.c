@@ -7,7 +7,7 @@
 LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 
 
-#define DEV_NUM			2
+#define DEV_NUM			1
 
 
 /***********inv_esb_variables *********************************************************/
