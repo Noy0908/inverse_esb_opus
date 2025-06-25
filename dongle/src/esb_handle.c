@@ -47,7 +47,7 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			if (p_event->periph_num == 1) {
 				led_on_off(0, p_event->data[0] & 0x1);
 			} else if (p_event->periph_num == 2) {
-				led_on_off(1, p_event->data[1] & 0x1);
+				led_on_off(1, p_event->data[0] & 0x1);
 			} 
 			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
 		}
