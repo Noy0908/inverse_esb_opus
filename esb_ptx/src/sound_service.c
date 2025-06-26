@@ -98,7 +98,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 
 			k_thread_resume(sound_service);
 			
-			// turn_on_off_led(true);
+			turn_on_off_led(true);
 		}
 		else if(event->type == MIC_STATUS_STOP)
 		{
@@ -107,7 +107,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 
 			k_thread_suspend(sound_service);
 
-            // turn_on_off_led(false);
+            turn_on_off_led(false);
 			/** radio work longer to  send the rest audio frame */
 			if(radio_is_up)
 			{
