@@ -144,30 +144,6 @@ int main(void)
 
 	dvi_adpcm_init_state(&m_adpcm_state);
 
-	// usb_audio_init();
-
-	// err = esb_initialize();
-	// if (err) {
-	// 	LOG_ERR("ESB initialization failed, err %d", err);
-	// 	return err;
-	// }
-
-	// LOG_INF("Initialization complete");
-
-	// err = esb_write_payload(&tx_payload);
-	// if (err) {
-	// 	LOG_ERR("Write payload, err %d", err);
-	// 	return err;
-	// }
-
-	// LOG_INF("Setting up for packet receiption");
-
-	// err = esb_start_rx();
-	// if (err) {
-	// 	LOG_ERR("RX setup failed, err %d", err);
-	// 	return err;
-	// }
-
 	inverse_esb_init();
 
 	radio_start_poll();

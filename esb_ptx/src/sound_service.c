@@ -48,15 +48,16 @@ static void mic_data_handle(void *, void *, void *)
 			if(esb_total_size >= MAX_PAYLOAD_SIZE)
 			{
 				// esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
+				inv_esb_package_enqueue(esb_tx_buf, sizeof(esb_tx_buf));
 				memset(esb_tx_buf, 0, MAX_PAYLOAD_SIZE);
 
 				esb_total_size = 0;
 			}
-			else
-			{
-				// if (get_timeslot_status()) 
-				// 	pull_packet_from_tx_msgq();
-			}
+			// else
+			// {
+			// 	// if (get_timeslot_status()) 
+			// 	// 	pull_packet_from_tx_msgq();
+			// }
 			
             free_audio_memory(buffer);
 		}
@@ -71,9 +72,9 @@ static void mic_data_handle(void *, void *, void *)
 
 
 
-// K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
-//                 mic_data_handle, NULL, NULL, NULL,
-//                 K_PRIO_PREEMPT(7), 0, 0);
+K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
+                mic_data_handle, NULL, NULL, NULL,
+                K_PRIO_PREEMPT(7), 0, 0);
 
 
 extern void turn_on_off_led(bool onOff);
@@ -92,19 +93,19 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 				LOG_INF("Radio start");
 			}
 
-            // LOG_INF("Micphone start to work!");
-			// drv_mic_start();
+            LOG_INF("Micphone start to work!");
+			drv_mic_start();
 
-			// k_thread_resume(sound_service);
+			k_thread_resume(sound_service);
 			
 			// turn_on_off_led(true);
 		}
 		else if(event->type == MIC_STATUS_STOP)
 		{
             LOG_INF("Micphone stop to work!");
-			// drv_mic_stop();
+			drv_mic_stop();
 
-			// k_thread_suspend(sound_service);
+			k_thread_suspend(sound_service);
 
             // turn_on_off_led(false);
 			/** radio work longer to  send the rest audio frame */

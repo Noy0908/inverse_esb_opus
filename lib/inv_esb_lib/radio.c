@@ -289,9 +289,9 @@ __INLINE static void radio_rtc_init(void)
  */ 
 static void radio_rtc_start(uint32_t ticks)
 {
-    RADIO_RTC->PRESCALER	= 32;   // 1ms per tick
+    // RADIO_RTC->PRESCALER	= 32;   // 1ms per tick
   //RADIO_RTC->PRESCALER	= 64;   // 2ms per tick
-  //RADIO_RTC->PRESCALER	= 128;   //4ms per tick
+  	RADIO_RTC->PRESCALER	= 16;   // 0.5ms per tick
 	RADIO_RTC->CC[0]        = ticks;
 	RADIO_RTC->INTENSET     = RTC_INTENSET_COMPARE0_Msk;
 	RADIO_RTC->TASKS_CLEAR	=1;
@@ -490,6 +490,7 @@ static void on_central_end(void)
 					event.periph_num = periph_no;
 					memcpy(event.data, &dma_buf[3], len);
 					event.data_len = len;
+					LOG_INF("Rec %d from %d: %d", event.data_len, event.periph_num, event.data[0]);
 					m_event_callback(&event);
 
 				#ifdef CONFIG_MULTIACK_DEBUG_GPIO
@@ -560,7 +561,7 @@ void delete_tx_item_from_queue(void)
 	struct inv_esb_payload tmp_payload;
 	if (k_msgq_get(&m_msgq_tx_payloads, &tmp_payload, K_NO_WAIT)) 
 	{
-		LOG_ERR("Failed to delete payload from msgq");
+		// LOG_ERR("Failed to delete payload from msgq");
 	}
 }
 
@@ -573,7 +574,7 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 	tx_payload.length = length;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
 	if (ret)  {
-		LOG_INF("Audio message queue is full");
+		// LOG_INF("Audio message queue is full");
 		return -ENOMEM;
 	}
 	return ret;
@@ -728,7 +729,7 @@ static void on_periph_disabled(void)
 			m_periph_is_poll_rcv = true;
 			rssi = -NRF_RADIO->RSSISAMPLE;
 			loss_cnt = 0;   
-			
+			LOG_INF("Poll packet received, RSSI: %d", rssi);
 			peripheral_handle_pull_packet();
 			          
              
@@ -748,6 +749,7 @@ static void on_periph_disabled(void)
 			radio_timer_stop();
 			/** start transmit packet from message queue */
 			send_packet_from_tx_msgq();
+
 		}
 	}
 	else if (m_radio_state == PERIPH_TX_STATE)

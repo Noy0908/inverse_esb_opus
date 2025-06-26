@@ -12,11 +12,10 @@ LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 
 /***********inv_esb_variables *********************************************************/
 
-static uint8_t			tx_packet[] = { 0, '1', '2', '3', '4', '5', '6','7', \
-						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', \
-						'0', '1', '2', '3', '4', '5', '6','7', \
-						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', };
-
+// static uint8_t			tx_packet[] = { 0, '1', '2', '3', '4', '5', '6','7', \
+// 						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', \
+// 						'0', '1', '2', '3', '4', '5', '6','7', \
+// 						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', };
 
 static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
@@ -25,8 +24,6 @@ extern void turn_on_off_led(bool onOff);
 
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
-	static struct inv_esb_payload tmp_payload;
-
 	switch(p_event->evt_id) {
 	case RADIO_EVENT_PERIPH_POLL_RCV:
 		if (p_event->data_len) {
@@ -34,20 +31,12 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			if(last_send_flag)
 			{
 				delete_tx_item_from_queue();
-				//Update TX packet
-				tx_packet[0]++;
-				inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
+				// //Update TX packet
+				// tx_packet[0]++;
+				// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
 			}
-			/** Set LEDs identical to the ones on the PTX. */
-			// turn_on_off_led(!(data0%8>0 && data0%8<=4));
 		}
 		break;
-	// case RADIO_EVENT_PERIPH_DATA_SND:
-	// 	delete_tx_item_from_queue();
-	// 	//Update TX packet
-	// 	tx_packet[0]++;
-	// 	inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
-	// 	break;
 	default:
 		break;
 	}
@@ -88,5 +77,5 @@ void inverse_esb_init(void)
 
 	radio_setup(&radio_init);
 
-	inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));		// just for testing
+	// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));		// just for testing
 }

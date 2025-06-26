@@ -27,6 +27,8 @@ K_MEM_SLAB_DEFINE(esb_slab, ESB_BLOCK_SIZE, ESB_BLOCK_COUNT, 4);
 
 K_MSGQ_DEFINE(esb_queue, 4, ESB_BLOCK_COUNT, 4);
 
+K_MSGQ_DEFINE(m_msgq_rx_payloads, sizeof(struct inv_esb_payload), 60, 4);
+
 K_SEM_DEFINE(esb_sem, 0, 1);
 
 /** this pointer variable used for transport the message queue to USB audio thread.*/
@@ -36,6 +38,22 @@ extern dvi_adpcm_state_t m_adpcm_state;
 
 
 extern int led_on_off(uint8_t idx, bool on);
+
+
+static int received_esb_package_enqueue(const uint8_t *buf, uint32_t length)
+{
+	int ret = 0;
+	static struct inv_esb_payload rx_payload;
+	memcpy(rx_payload.data, buf, length);
+	rx_payload.length = length;
+	ret = k_msgq_put(&m_msgq_rx_payloads, &rx_payload, K_NO_WAIT);
+	if (ret)  {
+		LOG_INF("Audio message queue is full");
+		return -ENOMEM;
+	}
+	return ret;
+}
+
 
 
 static void radio_evt_cb(radio_evt_t const * p_event)
@@ -49,7 +67,10 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			} else if (p_event->periph_num == 2) {
 				led_on_off(1, p_event->data[0] & 0x1);
 			} 
-			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
+			// LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
+
+			/** enqueue compressed audio data to message queue */
+			received_esb_package_enqueue((const uint8_t *)p_event->data, p_event->data_len);
 		}
 		new_pkt_received = true;
 		break;
@@ -79,100 +100,20 @@ void inverse_esb_init(void)
 
 
 
-#if 0
-static void event_handler(struct esb_evt const *event)
-{
-	switch (event->evt_id) {
-	case ESB_EVENT_TX_SUCCESS:
-		// LOG_DBG("TX SUCCESS EVENT");
-		break;
-	case ESB_EVENT_TX_FAILED:
-		LOG_DBG("TX FAILED EVENT");
-		break;
-	case ESB_EVENT_RX_RECEIVED:
-        // esb_buffer_handle();
-		/* notify thread that data is available */
-    	k_sem_give(&esb_sem);
-
-		// if (esb_read_rx_payload(&rx_payload) == 0) {
-		// 	LOG_INF("Packet received, len %d : "
-		// 		"0x%02x, 0x%02x, 0x%02x, 0x%02x ",				
-		// 		rx_payload.length, rx_payload.data[0],
-		// 		rx_payload.data[1], rx_payload.data[2],
-		// 		rx_payload.data[3] );
-		// 	gpio_pin_toggle(leds[0].port, leds[0].pin);			
-		// } else {
-		// 	LOG_ERR("Error while reading rx packet");
-		// }
-		break;
-	}
-}
-
-int esb_initialize(void)
-{
-	int err;
-	/* These are arbitrary default addresses. In end user products
-	 * different addresses should be used for each set of devices.
-	 */
-	uint8_t base_addr_0[4] = {0xE7, 0xE5, 0xE7, 0xE5};
-	uint8_t base_addr_1[4] = {0xC2, 0xC2, 0xC2, 0xC2};
-	uint8_t addr_prefix[8] = {0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8};
-
-	struct esb_config config = ESB_DEFAULT_CONFIG;
-
-	config.protocol = ESB_PROTOCOL_ESB_DPL;
-	config.retransmit_delay = 250;//600;
-	config.retransmit_count = 1;
-	config.bitrate = ESB_BITRATE_2MBPS;
-	config.mode = ESB_MODE_PRX;
-	config.event_handler = event_handler;
-	config.selective_auto_ack = true;
-
-	err = esb_init(&config);
-	if (err) {
-		return err;
-	}
-
-	err = esb_set_base_address_0(base_addr_0);
-	if (err) {
-		return err;
-	}
-
-	err = esb_set_base_address_1(base_addr_1);
-	if (err) {
-		return err;
-	}
-
-	err = esb_set_prefixes(addr_prefix, ARRAY_SIZE(addr_prefix));
-	if (err) {
-		return err;
-	}
-
-	return 0;
-}
-#endif
-
-// static void mono_to_stereo(int16_t* src_audio, int frames, int16_t* dst_audio) 
-// {
-//     for (int i = 0; i < frames; i++) 
-//     {
-//         dst_audio[2 * i] = src_audio[i];
-//         dst_audio[2 * i + 1] = src_audio[i];
-//     }
-// }
 
 
 void esb_buffer_handle(void)
 {
-#if 0
+#if 1
     int err = 0;
     int frame_size = 0;
 	uint8_t adpcm_index = 0;
-    struct esb_payload rx_payload;
+    struct inv_esb_payload rx_payload;
 
-    if (esb_read_rx_payload(&rx_payload) == 0) 
+    // if (esb_read_rx_payload(&rx_payload) == 0)
+	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-        LOG_INF("Packet received, len %d ", rx_payload.length);
+        // LOG_INF("Packet received, len %d ", rx_payload.length);
         //     "0x%02x, 0x%02x, 0x%02x, 0x%02x ",				
         //     rx_payload.length, rx_payload.data[0],
         //     rx_payload.data[1], rx_payload.data[2],
@@ -196,7 +137,7 @@ void esb_buffer_handle(void)
 			}
 			else 
 			{
-				LOG_ERR("Memory allocation for ESB receive time-out");
+				// LOG_ERR("Memory allocation for ESB receive time-out");
 				break;
 			}	
 		}
