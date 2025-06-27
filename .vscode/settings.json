@@ -7,6 +7,10 @@
     ],
     "files.associations": {
         "bluetooth.h": "c",
-        "usb_audio.h": "c"
+        "usb_audio.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "vector": "c"
     }
 }

@@ -25,7 +25,8 @@ static bool new_pkt_received;
 
 K_MEM_SLAB_DEFINE(esb_slab, ESB_BLOCK_SIZE, ESB_BLOCK_COUNT, 4);
 
-K_MSGQ_DEFINE(esb_queue, 4, ESB_BLOCK_COUNT, 4);
+K_MSGQ_DEFINE(esb_queue1, 4, ESB_BLOCK_COUNT, 4);
+K_MSGQ_DEFINE(esb_queue2, 4, ESB_BLOCK_COUNT, 4);
 
 K_MSGQ_DEFINE(m_msgq_rx_payloads, sizeof(struct inv_esb_payload), 60, 4);
 
@@ -40,11 +41,12 @@ extern dvi_adpcm_state_t m_adpcm_state;
 extern int led_on_off(uint8_t idx, bool on);
 
 
-static int received_esb_package_enqueue(const uint8_t *buf, uint32_t length)
+static int received_esb_package_enqueue(uint8_t devID, const uint8_t *buf, uint32_t length)
 {
 	int ret = 0;
 	static struct inv_esb_payload rx_payload;
-	memcpy(rx_payload.data, buf, length);
+	rx_payload.data[0] = devID;
+	memcpy(&rx_payload.data[1], buf, length);
 	rx_payload.length = length;
 	ret = k_msgq_put(&m_msgq_rx_payloads, &rx_payload, K_NO_WAIT);
 	if (ret)  {
@@ -70,7 +72,7 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			// LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
 
 			/** enqueue compressed audio data to message queue */
-			received_esb_package_enqueue((const uint8_t *)p_event->data, p_event->data_len);
+			received_esb_package_enqueue(p_event->periph_num, (const uint8_t *)p_event->data, p_event->data_len);
 		}
 		new_pkt_received = true;
 		break;
@@ -113,8 +115,9 @@ void esb_buffer_handle(void)
     // if (esb_read_rx_payload(&rx_payload) == 0)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-        // LOG_INF("Packet received[%d], 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
-		// 		rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
+		volatile uint8_t devID = rx_payload.data[0];
+        // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
+		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 	#if 1
 		while(adpcm_index + ADPCM_BLOCK_SIZE <= rx_payload.length)
 		{
@@ -125,7 +128,13 @@ void esb_buffer_handle(void)
 				// LOG_HEXDUMP_INF(block_ptr, 8, "ADPCM decompress");
     
 				/** send the PCM data to USB audio driver*/
-				err = k_msgq_put(&esb_queue, &block_ptr, K_NO_WAIT);
+				if(devID == 1)
+					err = k_msgq_put(&esb_queue1, &block_ptr, K_NO_WAIT);
+				else if(devID == 2)
+					err = k_msgq_put(&esb_queue2, &block_ptr, K_NO_WAIT);
+				else
+					err = -EINVAL;
+
 				if (err) {
 					LOG_ERR("Message sent error: %d", err);
 				}

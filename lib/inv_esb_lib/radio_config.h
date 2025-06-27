@@ -56,7 +56,7 @@
 			
 
 #define CENTRAL_TIMER_SCAN_US		               1500 //1.5ms, 1 us per tick		
-#define PERIPH_TIMER_SCAN_US		               2000 //2ms, 1 us per tick			
+#define PERIPH_TIMER_SCAN_US		               3000 //2ms, 1 us per tick			
 
 #define RTC_ADJ						               1
 

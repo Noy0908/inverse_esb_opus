@@ -1052,7 +1052,7 @@ int radio_setup(const radio_init_t *init)
 	radio_ppi_init();
 	radio_timer_init();
 	radio_rtc_init();
-	radio_set_tx_power(RADIO_TX_POWER_0DBM);
+	radio_set_tx_power(RADIO_TX_POWER_4DBM);
 
 	NRF_RADIO->TXADDRESS	= 0;		//to transmit at pipe 0
 	NRF_RADIO->RXADDRESSES	= 0x01;		//turn on pipe 0 only to receive

@@ -19,7 +19,8 @@ NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_
 
 static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
 
-extern struct k_msgq esb_queue;
+extern struct k_msgq esb_queue1;
+extern struct k_msgq esb_queue2;
 
 extern struct k_sem esb_sem;
 
@@ -32,16 +33,17 @@ extern int leds_toggle(void);
 /*
 * single channel transform to dual channels.
 *
-* @param[in] src_audio 	Pointer to the single channel source pcm stream.
-*			 frames	   	Length of the stram buffer
-*			 dst_audio	Pointer to the target dual channel pcm stream
+* @param[in] src_audio1 	Pointer to the single channel source pcm stream.
+* @param[in] src_audio2 	Pointer to the second single channel source pcm stream (if needed).
+*			 frames	   		Length of the stram buffer
+*			 dst_audio		Pointer to the target dual channel pcm stream
 */
-static void mono_to_stereo(int16_t* src_audio, int frames, int16_t* dst_audio) 
+static void mono_to_stereo(int16_t* src_audio1, int16_t* src_audio2, int frames, int16_t* dst_audio) 
 {
     for (int i = 0; i < frames; i++) 
     {
-        dst_audio[2 * i] = src_audio[i];
-        dst_audio[2 * i + 1] = src_audio[i];
+        dst_audio[2 * i] = src_audio1[i];
+        dst_audio[2 * i + 1] = src_audio2[i];
     }
 }
 
@@ -55,7 +57,8 @@ static void handle_audio_data(const struct device *dev)
 		leds_toggle();
 
     int ret = 0;
-    void *frame_buffer = NULL;
+    void *frame_buffer1 = NULL;
+	void *frame_buffer2 = NULL;
     size_t data_out_size = 0;
      
     struct net_buf *buf_out;
@@ -64,22 +67,57 @@ static void handle_audio_data(const struct device *dev)
 	if (!buf_out) 
 	{
 		LOG_ERR("Failed to allocate data buffer");
-		return;
+		// return;
 	}
 
-    if(k_msgq_get(&esb_queue, &frame_buffer, K_NO_WAIT) != 0)
+    if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) != 0)
     {
         // LOG_WRN("USB audio TX underrun");
-		net_buf_unref(buf_out);
-		return;
+		// net_buf_unref(buf_out);
+		// return;
+    }
+	if(k_msgq_get(&esb_queue2, &frame_buffer2, K_NO_WAIT) != 0)
+    {
+
+        // LOG_WRN("USB audio TX underrun");
+		// net_buf_unref(buf_out);
+		// return;
     }
    
     // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
-	mono_to_stereo((int16_t*) frame_buffer, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+	if(frame_buffer1 && frame_buffer2)
+	{
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		/** free the memory slab */
+		free_esb_slab_memory(frame_buffer1);	
+		free_esb_slab_memory(frame_buffer2);
+	}
+	else if(frame_buffer1)
+	{
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		free_esb_slab_memory(frame_buffer1);	
+	}
+	else if(frame_buffer2)
+	{
+		LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
+		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		free_esb_slab_memory(frame_buffer2);	
+	}
+	else
+	{
+		LOG_ERR("Both audio buffers are NULL");
+		net_buf_unref(buf_out);
+		return;
+	}
+
+	/** set the size of the buffer */
+	buf_out->len = buf_out->size;
+	// LOG_INF("USB audio TX data size: %d", buf_out->size);
+	
 	// memcpy(buf_out->data, frame_buffer, buf_out->size);
 	data_out_size =  buf_out->size;
-    /** free the memory slab */
-    free_esb_slab_memory(frame_buffer);	
+ 	
+	// LOG_INF("USB audio TX data size: %d", data_out_size);
 #if 1
 	 /** USB audio driver handle the pcm stream*/
 	if (data_out_size == usb_audio_get_in_frame_size(dev)) 
@@ -89,10 +127,10 @@ static void handle_audio_data(const struct device *dev)
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		else
-		{	
-			LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		}
+		// else
+		// {	
+		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+		// }
 	} 
 #else
 	if (data_out_size == FLASH_PAGE_SIZE) 
