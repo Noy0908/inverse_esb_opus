@@ -490,7 +490,7 @@ static void on_central_end(void)
 					event.periph_num = periph_no;
 					memcpy(event.data, &dma_buf[3], len);
 					event.data_len = len;
-					LOG_INF("Rec %d from %d: %d", event.data_len, event.periph_num, event.data[0]);
+					// LOG_INF("Rec %d from %d: %d", event.data_len, event.periph_num, event.data[0]);
 					m_event_callback(&event);
 
 				#ifdef CONFIG_MULTIACK_DEBUG_GPIO

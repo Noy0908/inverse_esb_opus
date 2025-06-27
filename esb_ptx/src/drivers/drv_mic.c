@@ -19,7 +19,8 @@ LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
  * data, needs to free that block.
  */
 
-K_MEM_SLAB_DEFINE(mem_slab, MAX_BLOCK_SIZE, BLOCK_COUNT, 4);
+// K_MEM_SLAB_DEFINE(mem_slab, MAX_BLOCK_SIZE, BLOCK_COUNT, 4);
+K_MEM_SLAB_DEFINE_STATIC(mem_slab, MAX_BLOCK_SIZE , BLOCK_COUNT, 4);
 
 
 static const struct gpio_dt_spec mic_power = GPIO_DT_SPEC_GET(DT_NODELABEL(mic_pwr), enable_gpios);

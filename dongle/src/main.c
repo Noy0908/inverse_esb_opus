@@ -22,7 +22,7 @@
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
-#define FW_VERSION				"1.2.1"
+#define FW_VERSION				"1.2.2"
 
 
 
@@ -129,8 +129,6 @@ int clocks_start(void)
 int main(void)
 {
 	int err;
-
-	LOG_INF("Enhanced ShockBurst prx sample");
 
 	// err = clocks_start();
 	// if (err) {
