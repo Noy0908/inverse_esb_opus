@@ -19,7 +19,7 @@
 #define ADPCM_BLOCK_SIZE			(MAX_BLOCK_SIZE/4 + 3)
 
 #define ESB_BLOCK_SIZE              (MAX_BLOCK_SIZE)
-#define ESB_BLOCK_COUNT             600
+#define ESB_BLOCK_COUNT             1000
 
 
 void inverse_esb_init(void);

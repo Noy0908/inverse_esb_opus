@@ -89,10 +89,10 @@ static void handle_audio_data(const struct device *dev)
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
+		else
+		{	
+			LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+		}
 	} 
 #else
 	if (data_out_size == FLASH_PAGE_SIZE) 

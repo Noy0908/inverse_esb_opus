@@ -52,11 +52,11 @@
 #define RF_CHAN_TAB_SIZE			               8
 
 
-#define RADIO_RTC_EVENT_TICKS		               3   // 2ms, 0.5ms per tick
+#define RADIO_RTC_EVENT_TICKS		               4   // 2ms, 0.5ms per tick
 			
 
-#define CENTRAL_TIMER_SCAN_US		               1200 //1.5ms, 1 us per tick		
-#define PERIPH_TIMER_SCAN_US		               1800 //2ms, 1 us per tick			
+#define CENTRAL_TIMER_SCAN_US		               1500 //1.5ms, 1 us per tick		
+#define PERIPH_TIMER_SCAN_US		               2000 //2ms, 1 us per tick			
 
 #define RTC_ADJ						               1
 

@@ -113,8 +113,8 @@ void esb_buffer_handle(void)
     // if (esb_read_rx_payload(&rx_payload) == 0)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-        LOG_INF("Packet received[%d], 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
-				rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
+        // LOG_INF("Packet received[%d], 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
+		// 		rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 	#if 1
 		while(adpcm_index + ADPCM_BLOCK_SIZE <= rx_payload.length)
 		{
