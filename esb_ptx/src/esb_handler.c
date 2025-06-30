@@ -11,12 +11,6 @@ LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 
 
 /***********inv_esb_variables *********************************************************/
-
-// static uint8_t			tx_packet[] = { 0, '1', '2', '3', '4', '5', '6','7', \
-// 						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', \
-// 						'0', '1', '2', '3', '4', '5', '6','7', \
-// 						'a', 'b', 'c', 'd', 'e', 'f', 'g','h', };
-
 static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
 
@@ -31,9 +25,6 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			if(last_send_flag)
 			{
 				delete_tx_item_from_queue();
-				// //Update TX packet
-				// tx_packet[0]++;
-				// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
 			}
 		}
 		break;
@@ -76,6 +67,4 @@ void inverse_esb_init(void)
 	radio_init.event_callback		= radio_evt_cb;
 
 	radio_setup(&radio_init);
-
-	// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));		// just for testing
 }
