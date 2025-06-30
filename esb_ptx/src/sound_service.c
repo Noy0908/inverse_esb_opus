@@ -1,5 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/audio/dmic.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/__assert.h>
 #include <zephyr/logging/log.h>
 #include "sound_service.h"
 #include "mic_work_event.h"
@@ -12,6 +14,33 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
 /* Milliseconds to wait for a block to be read. */
 #define READ_TIMEOUT            1000
+
+/** opus variables and functions */
+static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
+
+static void opus_encoder_configure(void)
+{
+	printk("opus_encoder_get_size() = %d\n", opus_encoder_get_size(m_opus_channels));
+	__ASSERT_NO_MSG(opus_encoder_get_size(m_opus_channels) <= sizeof(m_opus_encoder));
+	__ASSERT_NO_MSG(opus_encoder_init(m_opus_encoder_state, CONFIG_AUDIO_SAMPLING_FREQUENCY, m_opus_channels, OPUS_APPLICATION_RESTRICTED_LOWDELAY) == OPUS_OK);
+
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_BITRATE(m_opus_bitrate))                      == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_VBR(m_opus_vbr))                              == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_VBR_CONSTRAINT((m_opus_bitrate != OPUS_AUTO)))== OPUS_OK);
+
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_COMPLEXITY(m_opus_complexity))                == OPUS_OK);
+
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_SIGNAL(OPUS_AUTO))                            == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_LSB_DEPTH(16))                                == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_DTX(0))                                       == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_INBAND_FEC(0))                                == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_PACKET_LOSS_PERC(0))                          == OPUS_OK);
+}
+
+
+
+/**************************************************/
+
 
 static bool radio_is_up;
 static dvi_adpcm_state_t    m_adpcm_state;
