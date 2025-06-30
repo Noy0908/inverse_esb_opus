@@ -22,7 +22,7 @@
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
-#define FW_VERSION				"1.2.3"
+#define FW_VERSION				"1.0.0"
 
 
 
@@ -63,11 +63,11 @@ static int leds_init(void)
 
 
 
-int leds_toggle(void)
+int leds_toggle(uint8_t idx) 
 {
 	// for (size_t i = 0; i < ARRAY_SIZE(leds); i++) 
 	{
-		gpio_pin_toggle(leds[0].port, leds[3].pin);
+		gpio_pin_toggle(leds[0].port, leds[idx].pin);
 	}
 
 	return 0;

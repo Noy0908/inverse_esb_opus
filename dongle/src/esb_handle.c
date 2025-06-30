@@ -45,8 +45,8 @@ static int received_esb_package_enqueue(uint8_t devID, const uint8_t *buf, uint3
 {
 	int ret = 0;
 	static struct inv_esb_payload rx_payload;
-	rx_payload.data[0] = devID;
-	memcpy(&rx_payload.data[1], buf, length);
+	rx_payload.dev_id = devID;
+	memcpy(rx_payload.data, buf, length);
 	rx_payload.length = length;
 	ret = k_msgq_put(&m_msgq_rx_payloads, &rx_payload, K_NO_WAIT);
 	if (ret)  {
@@ -115,7 +115,7 @@ void esb_buffer_handle(void)
     // if (esb_read_rx_payload(&rx_payload) == 0)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-		volatile uint8_t devID = rx_payload.data[0];
+		uint8_t devID = rx_payload.dev_id;
         // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
 		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 	#if 1
@@ -124,7 +124,7 @@ void esb_buffer_handle(void)
 			if(k_mem_slab_alloc(&esb_slab, (void **) &block_ptr, K_MSEC(1)) == 0)
 			{
 				dvi_adpcm_decode(&(rx_payload.data[adpcm_index]), ADPCM_BLOCK_SIZE, block_ptr, &frame_size, &m_adpcm_state);
-				// LOG_INF("adpcm_index=%d, ADPCMdecompress %u bytes", adpcm_index, frame_size);
+				// LOG_INF("[%d]:adpcm_index=%d, ADPCMdecompress %u bytes", devID, adpcm_index, frame_size);
 				// LOG_HEXDUMP_INF(block_ptr, 8, "ADPCM decompress");
     
 				/** send the PCM data to USB audio driver*/

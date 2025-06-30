@@ -103,8 +103,9 @@ typedef struct
  *  received packet with a payload.
  */
 struct inv_esb_payload {
+    uint8_t dev_id; /**< Device ID, used to identify the device that sent the packet. */
 	uint8_t length; /**< Length of the packet when not in DPL mode. */
-	uint8_t data[MAX_PAYLOAD_SIZE + 1]; /**< The payload data and devID. */
+	uint8_t data[MAX_PAYLOAD_SIZE]; /**< The payload data and devID. */
 };
 
 typedef void (*event_callback_t ) (radio_evt_t const * p_event);

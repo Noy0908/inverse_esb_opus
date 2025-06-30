@@ -71,6 +71,8 @@ static uint8_t ppi_ch_timer_compare0_radio_txen;
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 static const struct device *dbg_port= DEVICE_DT_GET(DT_NODELABEL(gpio0));
 static const uint8_t dbg_pins[] = {PIN_CHANNEL_HOP, PIN_DATA_RX, PIN_DATA_TX, PIN_DBG_01, PIN_DBG_02, PIN_DBG_03};
+
+extern int leds_toggle(uint8_t idx);
 #endif
 
 // These function pointers are changed dynamically, depending on protocol configuration and state.
@@ -375,6 +377,10 @@ static void central_send_poll_packet(void)
 	
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
+
+	static uint32_t timeCount = 0;
+	if(0 == (timeCount++ % 50))
+		leds_toggle(3);
 #endif
 
 #ifdef CONFIG_RADIO_PKT_CNT 	

@@ -25,7 +25,7 @@ extern struct k_msgq esb_queue2;
 extern struct k_sem esb_sem;
 
 
-extern int leds_toggle(void);
+extern int leds_toggle(uint8_t idx);
 
 
 
@@ -54,7 +54,7 @@ static void handle_audio_data(const struct device *dev)
 	static uint32_t timeCount = 0;
 
 	if(0 == (timeCount++ % 50))
-		leds_toggle();
+		leds_toggle(2);
 
     int ret = 0;
     void *frame_buffer1 = NULL;
@@ -87,20 +87,20 @@ static void handle_audio_data(const struct device *dev)
     // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
 	if(frame_buffer1 && frame_buffer2)
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
 		/** free the memory slab */
 		free_esb_slab_memory(frame_buffer1);	
 		free_esb_slab_memory(frame_buffer2);
 	}
 	else if(frame_buffer1)
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
 		free_esb_slab_memory(frame_buffer1);	
 	}
 	else if(frame_buffer2)
 	{
-		LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE/2, (int16_t*)buf_out->data);
+		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
+		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
 		free_esb_slab_memory(frame_buffer2);	
 	}
 	else
@@ -110,13 +110,7 @@ static void handle_audio_data(const struct device *dev)
 		return;
 	}
 
-	/** set the size of the buffer */
-	buf_out->len = buf_out->size;
-	// LOG_INF("USB audio TX data size: %d", buf_out->size);
-	
-	// memcpy(buf_out->data, frame_buffer, buf_out->size);
 	data_out_size =  buf_out->size;
- 	
 	// LOG_INF("USB audio TX data size: %d", data_out_size);
 #if 1
 	 /** USB audio driver handle the pcm stream*/
