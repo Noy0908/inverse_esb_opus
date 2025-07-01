@@ -30,7 +30,7 @@ static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANC
 static uint16_t * m_periph_cnt; 
 #endif
 
-K_MSGQ_DEFINE(m_msgq_tx_payloads, sizeof(struct inv_esb_payload), 60, 4);
+K_MSGQ_DEFINE(m_msgq_tx_payloads, sizeof(struct inv_esb_payload), 100, 4);
 
 
 static uint8_t m_subevts;

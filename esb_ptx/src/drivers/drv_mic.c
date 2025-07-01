@@ -9,7 +9,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include "drv_mic.h"
-#include "../../../lib/adpcm_lib/dvi_adpcm.h"
+// #include "../../../lib/adpcm_lib/dvi_adpcm.h"
 
 LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
 
@@ -18,8 +18,6 @@ LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
  * Application, after getting a given block from the driver and processing its
  * data, needs to free that block.
  */
-
-// K_MEM_SLAB_DEFINE(mem_slab, MAX_BLOCK_SIZE, BLOCK_COUNT, 4);
 K_MEM_SLAB_DEFINE_STATIC(mem_slab, MAX_BLOCK_SIZE , BLOCK_COUNT, 4);
 
 
@@ -51,7 +49,7 @@ static void mic_power_off(void)
 	}
 }
 
-// static dvi_adpcm_state_t    adpcm_state;
+
 int drv_audio_init(void)
 {
 	int ret;

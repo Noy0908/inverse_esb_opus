@@ -90,7 +90,7 @@ static void handle_audio_data(const struct device *dev)
         channel2_flag = true;
     }
    
-    LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
+    // LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
@@ -122,10 +122,10 @@ static void handle_audio_data(const struct device *dev)
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		else
-		{	
-			LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		}
+		// else
+		// {	
+		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+		// }
 	} 
 #else
 	if (data_out_size == FLASH_PAGE_SIZE) 
@@ -141,10 +141,11 @@ static void handle_audio_data(const struct device *dev)
 		// }
 	} 
 #endif
-    // else 
-    // {
-	// 	LOG_WRN("Wrong size write: %d", data_out_size);
-	// }
+    else 
+    {
+		LOG_WRN("Wrong size write: %d", data_out_size);
+		net_buf_unref(buf_out);
+	}
 }
 
 
@@ -194,7 +195,6 @@ void esb_buffer_handle(void)
         // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
 		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 
-		// dvi_adpcm_decode(&(rx_payload.data[adpcm_index]), ADPCM_BLOCK_SIZE, block_ptr, &frame_size, &m_adpcm_state);
 		frame_size = opus_decode(m_opus_decoder_state, 
 								rx_payload.data, 
 								CONFIG_AUDIO_FRAME_SIZE_BYTES, 
@@ -206,7 +206,7 @@ void esb_buffer_handle(void)
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
-			while(pcm_index + FRAME_SIZE < frame_size )
+			while(pcm_index + FRAME_SIZE <= frame_size )
 			{
 				// LOG_INF("esb_queue1: pcm_index = %d", pcm_index);
 				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);

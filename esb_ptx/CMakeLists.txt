@@ -25,14 +25,14 @@ target_sources(app PRIVATE
   src/esb_handler.c
   src/drivers/drv_mic.c
   src/events/mic_work_event.c
-  ../lib/adpcm_lib/dvi_adpcm.c
+  # ../lib/adpcm_lib/dvi_adpcm.c
   ../lib/inv_esb_lib/radio.c
 )
 
 # NORDIC SDK APP END
 zephyr_library_include_directories(src/drivers/)
 zephyr_library_include_directories(src/events/)
-zephyr_library_include_directories(../lib/adpcm_lib)
+# zephyr_library_include_directories(../lib/adpcm_lib)
 zephyr_library_include_directories(../lib/inv_esb_lib)
 zephyr_include_directories(../lib/opus/opus_include/opus-1.2.1)
 zephyr_include_directories(../lib/opus/opus_configuration)

@@ -15,18 +15,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/types.h>
 #include "esb_handle.h"
-#include "dvi_adpcm.h"
+// #include "dvi_adpcm.h"
 #include "audio_handle.h"
 
 
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
-#define FW_VERSION				"1.1.0"
+#define FW_VERSION				"1.2.0"
 
-
-
-dvi_adpcm_state_t    m_adpcm_state;
 
 static const struct gpio_dt_spec leds[] = {
 	GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios),
@@ -35,9 +32,6 @@ static const struct gpio_dt_spec leds[] = {
 	GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios),
 };
 
-
-// static struct esb_payload tx_payload = ESB_CREATE_PAYLOAD(0,
-// 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17);
 
 
 static int leds_init(void)
@@ -139,8 +133,6 @@ int main(void)
 	if (err) {
 		return err;
 	}
-
-	// dvi_adpcm_init_state(&m_adpcm_state);
 
 	inverse_esb_init();
 

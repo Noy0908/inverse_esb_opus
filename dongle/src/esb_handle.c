@@ -1,7 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 // #include <esb.h>
-#include "dvi_adpcm.h"
+// #include "dvi_adpcm.h"
 #include "esb_handle.h"
 
 
@@ -19,13 +19,6 @@ static bool new_pkt_received;
 /*****************************************************************************************/
 K_MSGQ_DEFINE(m_msgq_rx_payloads, sizeof(struct inv_esb_payload), 60, 4);
 
-
-
-
-// extern dvi_adpcm_state_t m_adpcm_state;
-
-
-// extern int led_on_off(uint8_t idx, bool on);
 extern int leds_toggle(uint8_t idx);
 
 

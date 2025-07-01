@@ -22,37 +22,11 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 __ALIGN(4) static uint8_t m_opus_encoder[OPUS_ENCODER_SIZE];
 static OpusEncoder * const m_opus_encoder_state = (OpusEncoder *)m_opus_encoder;
 
-__ALIGN(4) static uint8_t m_opus_decoder[OPUS_DECODER_SIZE];
-static OpusDecoder * const m_opus_decoder_state = (OpusDecoder *)m_opus_decoder;
-
 static uint8_t m_opus_complexity = CONFIG_OPUS_COMPLEXITY;
 static int32_t m_opus_bitrate    = ((CONFIG_OPUS_BITRATE != 0) ? CONFIG_OPUS_BITRATE : OPUS_AUTO);
 static bool m_opus_vbr        = ((CONFIG_OPUS_BITRATE == 0) || (CONFIG_OPUS_VBR_ENABLED != 0));
 static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
 
-// static int16_t test_data[] = {
-//         0,2570,5126,7649,10125,12539,14876,17121,19260,21281,23170,24916,26509,27939,29196,30273,
-//         31164,31862,32364,32666,32767,32666,32364,31862,31164,30273,29196,27939,26509,24916,23170,
-//         21281,19260,17121,14876,12539,10125,7649,5126,2570,0,-2570,-5126,-7649,-10125,-12539,-14876,
-//         -17121,-19260,-21281,-23170,-24916,-26509,-27939,-29196,-30273,-31164,-31862,-32364,-32666,
-//         -32767,-32666,-32364,-31862,-31164,-30273,-29196,-27939,-26509,-24916,-23170,-21281,-19260,
-//         -17121,-14876,-12539,-10125,-7649,-5126,-2570,0,2570,5126,7649,10125,12539,14876,17121,19260,
-//         21281,23170,24916,26509,27939,29196,30273,31164,31862,32364,32666,32767,32666,32364,31862,31164,
-//         30273,29196,27939,26509,24916,23170,21281,19260,17121,14876,12539,10125,7649,5126,2570,0,-2570,
-//         -5126,-7649,-10125,-12539,-14876,-17121,-19260,-21281,-23170,-24916,-26509,-27939,-29196,-30273,
-//         -31164,-31862,-32364,-32666,-32767,-32666,-32364,-31862,-31164,-30273,-29196,-27939,-26509,-24916,
-//         -23170,-21281,-19260,-17121,-14876,-12539,-10125,-7649,-5126,-2570,0,2570,5126,7649,10125,12539,
-//         14876,17121,19260,21281,23170,24916,26509,27939,29196,30273,31164,31862,32364,32666,32767,32666,
-//         32364,31862,31164,30273,29196,27939,26509,24916,23170,21281,19260,17121,14876,12539,10125,7649,
-//         5126,2570,0,-2570,-5126,-7649,-10125,-12539,-14876,-17121,-19260,-21281,-23170,-24916,-26509,
-//         -27939,-29196,-30273,-31164,-31862,-32364,-32666,-32767,-32666,-32364,-31862,-31164,-30273,
-//         -29196,-27939,-26509,-24916,-23170,-21281,-19260,-17121,-14876,-12539,-10125,-7649,-5126,-2570,
-//         0,2570,5126,7649,10125,12539,14876,17121,19260,21281,23170,24916,26509,27939,29196,30273,31164,
-//         31862,32364,32666,32767,32666,32364,31862,31164,30273,29196,27939,26509,24916,23170,21281,19260,
-//         17121,14876,12539,10125,7649,5126,2570,0,-2570,-5126,-7649,-10125,-12539,-14876,-17121,-19260,
-//         -21281,-23170,-24916,-26509,-27939,-29196,-30273,-31164,-31862,-32364,-32666,-32767,-32666,-32364,
-//         -31862,-31164,-30273,-29196,-27939,-26509,-24916,-23170,-21281,-19260,-17121,-14876,-12539,-10125,-7649,-5126,-2570,
-// };
 
 static void opus_encoder_configure(void)
 {
@@ -76,15 +50,13 @@ static void opus_encoder_configure(void)
 
 
 static bool radio_is_up;
-// static dvi_adpcm_state_t    m_adpcm_state;
 
 
 static void mic_data_handle(void *, void *, void *)
 {
     void *buffer;
 	uint32_t size;
-	// static uint8_t esb_tx_buf[MAX_PAYLOAD_SIZE] = {5};
-	// static uint8_t esb_total_size = 0;
+
 	opus_encoder_configure();
 
     LOG_INF("Sound service start, wait for PCM data......");
@@ -98,12 +70,7 @@ static void mic_data_handle(void *, void *, void *)
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
         size = read_audio_data(&buffer, READ_TIMEOUT);
         if(size)
-        {
-			// LOG_INF("Got pcm buffer of %d bytes, sizeof =  %d",  size, sizeof(test_data));
-			// LOG_INF("Got pcm buffer %p of %u bytes, sizeof =  %d", buffer, size, sizeof(test_data));
-			// LOG_HEXDUMP_INF(buffer,size,"PCM data");
-			// dvi_adpcm_encode(buffer, size, frame_buf, &frame_size,&m_adpcm_state, true);
-		
+        {	
 			frame_size = opus_encode(
 									m_opus_encoder_state,
 									buffer,
@@ -111,32 +78,13 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			LOG_INF("Encoded frame size: %d", frame_size);
+			// LOG_INF("Encoded frame size: %d", frame_size);
 
 			inv_esb_package_enqueue(frame_buf, frame_size);
-		#if 0							
-			memcpy(&(esb_tx_buf[esb_total_size]), frame_buf, frame_size);
-			esb_total_size += frame_size;
-
-			if(esb_total_size >= MAX_PAYLOAD_SIZE)
-			{
-				// esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
-				inv_esb_package_enqueue(esb_tx_buf, sizeof(esb_tx_buf));
-				memset(esb_tx_buf, 0, MAX_PAYLOAD_SIZE);
-
-				esb_total_size = 0;
-			}
-			// else
-			// {
-			// 	// if (get_timeslot_status()) 
-			// 	// 	pull_packet_from_tx_msgq();
-			// }
-		#endif	
+	
             free_audio_memory(buffer);
 		
 		}
-		// LOG_INF("Sound service start, wait for PCM data......");
-		// k_sleep(K_MSEC(1000));
     }
 }
 
