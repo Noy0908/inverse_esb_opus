@@ -3,6 +3,7 @@
 #include <zephyr/net_buf.h>
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/usb/class/usb_audio.h>
+#include <pcm_mix.h>
 
 #include "audio_handle.h"
 #include "esb_handle.h"
@@ -93,15 +94,21 @@ static void handle_audio_data(const struct device *dev)
     // LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
+		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
+		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 	}
 	else if(channel1_flag)
 	{
+		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE, (int16_t*)buf_out->data);
+		
 	}
 	else if(channel2_flag)
 	{
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
+		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
@@ -118,6 +125,7 @@ static void handle_audio_data(const struct device *dev)
 	if (data_out_size == usb_audio_get_in_frame_size(dev)) 
 	{
 		ret = usb_audio_send(dev, buf_out, data_out_size);
+		// ret = usb_audio_send(dev, frame_buffer1, sizeof(frame_buffer1));
 		if (ret) {
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
