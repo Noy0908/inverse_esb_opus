@@ -66,6 +66,8 @@ static void handle_audio_data(const struct device *dev)
     int ret = 0;
     // void *frame_buffer1 = NULL;
 	// void *frame_buffer2 = NULL;
+	bool channel1_flag = false;
+	bool channel2_flag = false;
 	int16_t frame_buffer1[FRAME_SIZE] = {0};
 	int16_t frame_buffer2[FRAME_SIZE] = {0};
     size_t data_out_size = 0;
@@ -79,28 +81,28 @@ static void handle_audio_data(const struct device *dev)
 		// return;
 	}
 
-    if(k_msgq_get(&esb_queue1, frame_buffer1, K_NO_WAIT) != 0)
+    if(k_msgq_get(&esb_queue1, frame_buffer1, K_NO_WAIT) == 0)
     {
-        // LOG_WRN("PCM channel1 is empty!");
+        channel1_flag = true;
     }
-	if(k_msgq_get(&esb_queue2, frame_buffer2, K_NO_WAIT) != 0)
+	if(k_msgq_get(&esb_queue2, frame_buffer2, K_NO_WAIT) == 0)
     {
-        // LOG_WRN("PCM channel2 is empty!");
+        channel2_flag = true;
     }
    
     LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
-	if(frame_buffer1[0] && frame_buffer2[0])
+	if(channel1_flag && channel2_flag)
 	{
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
-	else if(frame_buffer1[0])
+	else if(channel1_flag)
 	{
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
-	else if(frame_buffer2[0])
+	else if(channel2_flag)
 	{
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, PCM_BLOCK_SIZE, (int16_t*)buf_out->data);
+		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
 	{
