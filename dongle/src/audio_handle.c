@@ -11,23 +11,30 @@
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 
-#define AUDIO_HANDLE_STACK_SIZE        2048
-#define AUDIO_HANDLE_PRIORITY          3
+#define AUDIO_HANDLE_STACK_SIZE        	20480
+#define AUDIO_HANDLE_PRIORITY          	3
+
+#define OPUS_DECODER_SIZE   			9224
 
 
 NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_STEREO, 8, net_buf_destroy);
 
+K_MSGQ_DEFINE(esb_queue1, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
+K_MSGQ_DEFINE(esb_queue2, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
+
 static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
 
-extern struct k_msgq esb_queue1;
-extern struct k_msgq esb_queue2;
+/******************************** opus decoder variables ******************************************/
+static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
+__ALIGN(4) static uint8_t m_opus_decoder[OPUS_DECODER_SIZE];
+static OpusDecoder * const m_opus_decoder_state = (OpusDecoder *)m_opus_decoder;
 
-extern struct k_sem esb_sem;
+/** this pointer variable used for transport the message queue to USB audio thread.*/
+// void *block_ptr = NULL;
 
+extern struct k_msgq m_msgq_rx_payloads;
 
 extern int leds_toggle(uint8_t idx);
-
-
 
 
 /*
@@ -57,8 +64,10 @@ static void handle_audio_data(const struct device *dev)
 		leds_toggle(2);
 
     int ret = 0;
-    void *frame_buffer1 = NULL;
-	void *frame_buffer2 = NULL;
+    // void *frame_buffer1 = NULL;
+	// void *frame_buffer2 = NULL;
+	int16_t frame_buffer1[FRAME_SIZE] = {0};
+	int16_t frame_buffer2[FRAME_SIZE] = {0};
     size_t data_out_size = 0;
      
     struct net_buf *buf_out;
@@ -70,38 +79,28 @@ static void handle_audio_data(const struct device *dev)
 		// return;
 	}
 
-    if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) != 0)
+    if(k_msgq_get(&esb_queue1, frame_buffer1, K_NO_WAIT) != 0)
     {
-        // LOG_WRN("USB audio TX underrun");
-		// net_buf_unref(buf_out);
-		// return;
+        // LOG_WRN("PCM channel1 is empty!");
     }
-	if(k_msgq_get(&esb_queue2, &frame_buffer2, K_NO_WAIT) != 0)
+	if(k_msgq_get(&esb_queue2, frame_buffer2, K_NO_WAIT) != 0)
     {
-
-        // LOG_WRN("USB audio TX underrun");
-		// net_buf_unref(buf_out);
-		// return;
+        // LOG_WRN("PCM channel2 is empty!");
     }
    
-    // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
-	if(frame_buffer1 && frame_buffer2)
+    LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
+	if(frame_buffer1[0] && frame_buffer2[0])
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
-		/** free the memory slab */
-		free_esb_slab_memory(frame_buffer1);	
-		free_esb_slab_memory(frame_buffer2);
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
-	else if(frame_buffer1)
+	else if(frame_buffer1[0])
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
-		free_esb_slab_memory(frame_buffer1);	
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
-	else if(frame_buffer2)
+	else if(frame_buffer2[0])
 	{
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
-		free_esb_slab_memory(frame_buffer2);	
+		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, PCM_BLOCK_SIZE, (int16_t*)buf_out->data);
 	}
 	else
 	{
@@ -121,10 +120,10 @@ static void handle_audio_data(const struct device *dev)
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
+		else
+		{	
+			LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+		}
 	} 
 #else
 	if (data_out_size == FLASH_PAGE_SIZE) 
@@ -140,10 +139,10 @@ static void handle_audio_data(const struct device *dev)
 		// }
 	} 
 #endif
-    else 
-    {
-		LOG_WRN("Wrong size write: %d", data_out_size);
-	}
+    // else 
+    // {
+	// 	LOG_WRN("Wrong size write: %d", data_out_size);
+	// }
 }
 
 
@@ -167,6 +166,84 @@ static const struct usb_audio_ops mic_ops = {
 };
 
 
+/*********************************opus decoder*********************************************/
+
+static void opus_decoder_configure(void)
+{
+        printk("opus_decoder_get_size() = %d\n", opus_decoder_get_size(m_opus_channels));        
+        __ASSERT_NO_MSG(opus_decoder_get_size(m_opus_channels) <= sizeof(m_opus_decoder));
+        __ASSERT_NO_MSG(opus_decoder_init(m_opus_decoder_state, CONFIG_AUDIO_SAMPLING_FREQUENCY, m_opus_channels) == OPUS_OK);
+}
+
+
+
+void esb_buffer_handle(void)
+{
+    int err = 0;
+    struct inv_esb_payload rx_payload;
+	int16_t block_ptr[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
+
+	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
+    {
+		uint8_t pcm_index = 0;
+		int frame_size = 0;
+		uint8_t devID = rx_payload.dev_id;
+
+        // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
+		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
+
+		// dvi_adpcm_decode(&(rx_payload.data[adpcm_index]), ADPCM_BLOCK_SIZE, block_ptr, &frame_size, &m_adpcm_state);
+		frame_size = opus_decode(m_opus_decoder_state, 
+								rx_payload.data, 
+								CONFIG_AUDIO_FRAME_SIZE_BYTES, 
+								block_ptr, 
+								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
+																			
+		// LOG_INF("devId= %d, Decompressed frame size(samples) = %d\n", devID, frame_size);
+
+		/** send the PCM data to USB audio driver*/
+		if(devID == 1)
+		{
+			while(pcm_index + FRAME_SIZE < frame_size )
+			{
+				// LOG_INF("esb_queue1: pcm_index = %d", pcm_index);
+				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
+				if(!err)
+				{
+					pcm_index += FRAME_SIZE;
+				}
+				else
+				{
+					LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+				}
+			}
+		}
+		else if(devID == 2)
+		{
+			while(pcm_index + FRAME_SIZE <= frame_size)
+			{
+				// LOG_INF("esb_queue2: pcm_index = %d", pcm_index);
+				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);
+				if(!err)
+				{
+					pcm_index += FRAME_SIZE;
+				}
+			}
+		}
+		else
+		{
+			err = -EINVAL;
+		}
+				
+		if (err) {
+			LOG_ERR("Message sent error: %d", err);
+		}
+    } 
+    else 
+    {
+        LOG_ERR("Error while reading esb rx packet");
+    }
+}
 
 static void esb_audio_data_handle(void *, void *, void *)
 {
@@ -187,12 +264,13 @@ static void esb_audio_data_handle(void *, void *, void *)
 		return;
 	}
 
+	opus_decoder_configure();
+
 	LOG_INF("USB enabled");
 	LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
 
     while(1)
     {
-        // k_sem_take(&esb_sem, K_FOREVER);
 		esb_buffer_handle();
     }
 }

@@ -22,7 +22,7 @@
 
 LOG_MODULE_REGISTER(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
-#define FW_VERSION				"1.0.0"
+#define FW_VERSION				"1.1.0"
 
 
 
@@ -140,21 +140,13 @@ int main(void)
 		return err;
 	}
 
-	dvi_adpcm_init_state(&m_adpcm_state);
+	// dvi_adpcm_init_state(&m_adpcm_state);
 
 	inverse_esb_init();
 
 	radio_start_poll();
 
 	LOG_DBG("Inverse esb dongle demo, fw_version is %s", FW_VERSION);
-
-	// while(1)
-	// {
-	// 	/* Handle audio data */
-	// 	handle_audio_data();
-
-	// 	// LOG_DBG("Waiting for ESB events...");
-	// }
 
 	/* return to idle thread */
 	return 0;

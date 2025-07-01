@@ -85,8 +85,6 @@ static void mic_data_handle(void *, void *, void *)
 	uint32_t size;
 	// static uint8_t esb_tx_buf[MAX_PAYLOAD_SIZE] = {5};
 	// static uint8_t esb_total_size = 0;
-
-    // dvi_adpcm_init_state(&m_adpcm_state);
 	opus_encoder_configure();
 
     LOG_INF("Sound service start, wait for PCM data......");
@@ -96,14 +94,9 @@ static void mic_data_handle(void *, void *, void *)
 
     while(1)
     {
-	
         int frame_size;
-	    // char frame_buf[MAX_BLOCK_SIZE/4 + 3] = {0};
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
-
         size = read_audio_data(&buffer, READ_TIMEOUT);
-		// buffer = test_data;
-		// size = CONFIG_AUDIO_FRAME_SIZE_SAMPLES;
         if(size)
         {
 			// LOG_INF("Got pcm buffer of %d bytes, sizeof =  %d",  size, sizeof(test_data));
@@ -119,6 +112,8 @@ static void mic_data_handle(void *, void *, void *)
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
 			LOG_INF("Encoded frame size: %d", frame_size);
+
+			inv_esb_package_enqueue(frame_buf, frame_size);
 		#if 0							
 			memcpy(&(esb_tx_buf[esb_total_size]), frame_buf, frame_size);
 			esb_total_size += frame_size;

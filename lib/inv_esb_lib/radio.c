@@ -576,6 +576,10 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 {
 	int ret = 0;
 	static struct inv_esb_payload tx_payload;
+	if (length > MAX_PAYLOAD_SIZE) {
+		LOG_ERR("Payload length %d exceeds maximum %d", length, MAX_PAYLOAD_SIZE);
+		return -EMSGSIZE;
+	}
 	memcpy(tx_payload.data, buf, length);
 	tx_payload.length = length;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
