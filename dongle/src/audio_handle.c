@@ -22,7 +22,7 @@ static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
 extern struct k_msgq esb_queue1;
 extern struct k_msgq esb_queue2;
 
-extern struct k_sem esb_sem;
+
 
 
 extern int leds_toggle(uint8_t idx);
@@ -53,8 +53,6 @@ static void handle_audio_data(const struct device *dev)
 	// LOG_INF("data were requested from the device and may be send to the Host!");
 	static uint32_t timeCount = 0;
     int ret = 0;
-    // void *frame_buffer1 = NULL;
-	// void *frame_buffer2 = NULL;
 	int16_t frame_buffer1[FRAME_SIZE] = {0};
 	int16_t frame_buffer2[FRAME_SIZE] = {0};
 	bool channel1_flag = false;
@@ -67,7 +65,7 @@ static void handle_audio_data(const struct device *dev)
 	if (!buf_out) 
 	{
 		LOG_ERR("Failed to allocate data buffer");
-		// return;
+		return;
 	}
 
     if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) == 0)
@@ -89,20 +87,15 @@ static void handle_audio_data(const struct device *dev)
 	if(channel1_flag && channel2_flag)
 	{
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
-		/** free the memory slab */
-		// free_esb_slab_memory(frame_buffer1);	
-		// free_esb_slab_memory(frame_buffer2);
 	}
 	else if(channel1_flag)
 	{
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE/2, (int16_t*)buf_out->data);
-		// free_esb_slab_memory(frame_buffer1);	
 	}
 	else if(channel2_flag)
 	{
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
-		// free_esb_slab_memory(frame_buffer2);	
 	}
 	else
 	{
@@ -129,21 +122,20 @@ static void handle_audio_data(const struct device *dev)
 			// LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
 		}
 	} 
-#else
-	if (data_out_size == FLASH_PAGE_SIZE) 
-    {
-		ret = soc_flash_write(total_size, buf_out->data, data_out_size);
-		if (ret) {
-			LOG_WRN("write flash failed, ret: %d", ret);
-			net_buf_unref(buf_out);
-		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
-	} 
-#endif
+	// if (data_out_size == FLASH_PAGE_SIZE) 
+    // {
+	// 	ret = soc_flash_write(total_size, buf_out->data, data_out_size);
+	// 	if (ret) {
+	// 		LOG_WRN("write flash failed, ret: %d", ret);
+	// 		net_buf_unref(buf_out);
+	// 	}
+	// 	// else
+	// 	// {	
+	// 	// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+	// 	// }
+	// } 
     else 
+#endif
     {
 		LOG_WRN("Wrong size write: %d", data_out_size);
 		net_buf_unref(buf_out);
@@ -196,7 +188,6 @@ static void esb_audio_data_handle(void *, void *, void *)
 
     while(1)
     {
-        // k_sem_take(&esb_sem, K_FOREVER);
 		esb_buffer_handle();
     }
 }

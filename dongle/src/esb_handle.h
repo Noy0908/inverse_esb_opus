@@ -29,6 +29,5 @@ void inverse_esb_init(void);
 
 void esb_buffer_handle(void);
 
-// void free_esb_slab_memory(void *buffer);
 
 #endif

@@ -30,7 +30,7 @@ K_MSGQ_DEFINE(esb_queue2, FRAME_SIZE, ESB_BLOCK_COUNT, 4);
 
 K_MSGQ_DEFINE(m_msgq_rx_payloads, sizeof(struct inv_esb_payload), 60, 4);
 
-K_SEM_DEFINE(esb_sem, 0, 1);
+
 
 /** this pointer variable used for transport the message queue to USB audio thread.*/
 void *block_ptr = NULL;
@@ -112,9 +112,7 @@ void esb_buffer_handle(void)
 	uint8_t adpcm_index = 0;
     struct inv_esb_payload rx_payload;
 	uint8_t pcm_block[MAX_BLOCK_SIZE];
-	// int16_t block_ptr[MAX_BLOCK_SIZE];
 
-    // if (esb_read_rx_payload(&rx_payload) == 0)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
 		uint8_t devID = rx_payload.dev_id;
@@ -123,7 +121,6 @@ void esb_buffer_handle(void)
 
 		dvi_adpcm_decode(rx_payload.data, ADPCM_BLOCK_SIZE, pcm_block, &frame_size, &m_adpcm_state);
 		// LOG_INF("[%d]:adpcm_index=%d, ADPCMdecompress %u bytes", devID, adpcm_index, frame_size);
-	#if 1
 		if(devID == 1)
 		{
 			while(adpcm_index + FRAME_SIZE <= frame_size)
@@ -165,11 +162,5 @@ void esb_buffer_handle(void)
     {
         LOG_ERR("Error while reading esb rx packet");
     }
-#endif
 }
 
-
-// void free_esb_slab_memory(void *buffer)
-// {
-// 	k_mem_slab_free(&esb_slab, buffer);
-// }

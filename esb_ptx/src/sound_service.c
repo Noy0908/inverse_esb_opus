@@ -21,7 +21,6 @@ static void mic_data_handle(void *, void *, void *)
 {
     void *buffer;
 	uint32_t size;
-	static uint8_t esb_tx_buf[MAX_PAYLOAD_SIZE] = {5};
 	static uint8_t esb_total_size = 0;
 
     dvi_adpcm_init_state(&m_adpcm_state);
@@ -33,7 +32,6 @@ static void mic_data_handle(void *, void *, void *)
 
     while(1)
     {
-	#if 1
         int frame_size;
 	    char frame_buf[MAX_BLOCK_SIZE/4 + 3] = {0};
 
@@ -42,32 +40,12 @@ static void mic_data_handle(void *, void *, void *)
         {
 			dvi_adpcm_encode(buffer, size, frame_buf, &frame_size,&m_adpcm_state, true);
 
-			LOG_INF("Encoded frame size: %d", frame_size);
-			// memcpy(&(esb_tx_buf[esb_total_size]), frame_buf, frame_size);
-			// esb_total_size += frame_size;
+			// LOG_INF("Encoded frame size: %d", frame_size);
 
-			// if(esb_total_size >= MAX_PAYLOAD_SIZE)
-			{
-				// esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
-				inv_esb_package_enqueue(frame_buf, frame_size);
-				// memset(esb_tx_buf, 0, MAX_PAYLOAD_SIZE);
-
-				// esb_total_size = 0;
-			}
-			// else
-			// {
-			// 	// if (get_timeslot_status()) 
-			// 	// 	pull_packet_from_tx_msgq();
-			// }
-			
+			inv_esb_package_enqueue(frame_buf, frame_size);
+		
             free_audio_memory(buffer);
 		}
-		// LOG_INF("Sound service start, wait for PCM data......");
-		// k_sleep(K_MSEC(1000));
-	#else
-		esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
-		k_sleep(K_MSEC(1));
-	#endif
     }
 }
 
