@@ -52,13 +52,13 @@ static void handle_audio_data(const struct device *dev)
 {
 	// LOG_INF("data were requested from the device and may be send to the Host!");
 	static uint32_t timeCount = 0;
-
-	if(0 == (timeCount++ % 50))
-		leds_toggle(2);
-
     int ret = 0;
-    void *frame_buffer1 = NULL;
-	void *frame_buffer2 = NULL;
+    // void *frame_buffer1 = NULL;
+	// void *frame_buffer2 = NULL;
+	int16_t frame_buffer1[FRAME_SIZE] = {0};
+	int16_t frame_buffer2[FRAME_SIZE] = {0};
+	bool channel1_flag = false;
+	bool channel2_flag = false;
     size_t data_out_size = 0;
      
     struct net_buf *buf_out;
@@ -70,38 +70,39 @@ static void handle_audio_data(const struct device *dev)
 		// return;
 	}
 
-    if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) != 0)
+    if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) == 0)
     {
+		channel1_flag = true;
         // LOG_WRN("USB audio TX underrun");
 		// net_buf_unref(buf_out);
 		// return;
     }
-	if(k_msgq_get(&esb_queue2, &frame_buffer2, K_NO_WAIT) != 0)
+	if(k_msgq_get(&esb_queue2, &frame_buffer2, K_NO_WAIT) == 0)
     {
-
+		channel2_flag = true;
         // LOG_WRN("USB audio TX underrun");
 		// net_buf_unref(buf_out);
 		// return;
     }
    
     // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
-	if(frame_buffer1 && frame_buffer2)
+	if(channel1_flag && channel2_flag)
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
 		/** free the memory slab */
-		free_esb_slab_memory(frame_buffer1);	
-		free_esb_slab_memory(frame_buffer2);
+		// free_esb_slab_memory(frame_buffer1);	
+		// free_esb_slab_memory(frame_buffer2);
 	}
-	else if(frame_buffer1)
+	else if(channel1_flag)
 	{
-		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
-		free_esb_slab_memory(frame_buffer1);	
+		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE/2, (int16_t*)buf_out->data);
+		// free_esb_slab_memory(frame_buffer1);	
 	}
-	else if(frame_buffer2)
+	else if(channel2_flag)
 	{
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, MAX_BLOCK_SIZE, (int16_t*)buf_out->data);
-		free_esb_slab_memory(frame_buffer2);	
+		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
+		// free_esb_slab_memory(frame_buffer2);	
 	}
 	else
 	{
@@ -121,10 +122,12 @@ static void handle_audio_data(const struct device *dev)
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
+		else
+		{	
+			if(0 == (timeCount++ % 50))
+				leds_toggle(2);
+			// LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+		}
 	} 
 #else
 	if (data_out_size == FLASH_PAGE_SIZE) 
@@ -143,6 +146,7 @@ static void handle_audio_data(const struct device *dev)
     else 
     {
 		LOG_WRN("Wrong size write: %d", data_out_size);
+		net_buf_unref(buf_out);
 	}
 }
 

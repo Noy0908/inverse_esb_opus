@@ -26,13 +26,12 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 #include "mic_work_event.h"
 #include "sound_service.h"
 #include "esb_handler.h"
-// #include "../../lib/inv_esb_lib/radio.h"
-// #include "../../lib/inv_esb_lib/radio_config.h"
+
 
 LOG_MODULE_REGISTER(main, CONFIG_ESB_BT_LOG_LEVEL);
 
 
-#define FW_VERSION		"1.2.9"
+#define FW_VERSION		"1.2.0"
 
 #define MOV_LED			DK_LED1
 #define TIMESLOT_LED	DK_LED2
@@ -193,14 +192,5 @@ int main(void)
 	LOG_INF("ESB BLE Multiprotocol Example, version is %s!\r\n",FW_VERSION);
 	LOG_INF("Main thread priority is %d!\r\n",k_thread_priority_get(k_current_get()));
 
-	
-#if 0
-	while (1) {		
-		if (get_timeslot_status()) 
-			pull_packet_from_tx_msgq();
-		else
-			k_sleep(K_MSEC(1));
-	}
-#endif
 	return 0;
 }

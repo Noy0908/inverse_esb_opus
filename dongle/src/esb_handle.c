@@ -23,10 +23,10 @@ static bool new_pkt_received;
  * needs to free that block.
  */
 
-K_MEM_SLAB_DEFINE(esb_slab, ESB_BLOCK_SIZE, ESB_BLOCK_COUNT, 4);
+// K_MEM_SLAB_DEFINE(esb_slab, FRAME_SIZE, PCM_BLOCK_COUNT, 4);
 
-K_MSGQ_DEFINE(esb_queue1, 4, ESB_BLOCK_COUNT, 4);
-K_MSGQ_DEFINE(esb_queue2, 4, ESB_BLOCK_COUNT, 4);
+K_MSGQ_DEFINE(esb_queue1, FRAME_SIZE, ESB_BLOCK_COUNT, 4);
+K_MSGQ_DEFINE(esb_queue2, FRAME_SIZE, ESB_BLOCK_COUNT, 4);
 
 K_MSGQ_DEFINE(m_msgq_rx_payloads, sizeof(struct inv_esb_payload), 60, 4);
 
@@ -111,6 +111,8 @@ void esb_buffer_handle(void)
     int frame_size = 0;
 	uint8_t adpcm_index = 0;
     struct inv_esb_payload rx_payload;
+	uint8_t pcm_block[MAX_BLOCK_SIZE];
+	// int16_t block_ptr[MAX_BLOCK_SIZE];
 
     // if (esb_read_rx_payload(&rx_payload) == 0)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
@@ -118,35 +120,45 @@ void esb_buffer_handle(void)
 		uint8_t devID = rx_payload.dev_id;
         // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
 		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
+
+		dvi_adpcm_decode(rx_payload.data, ADPCM_BLOCK_SIZE, pcm_block, &frame_size, &m_adpcm_state);
+		// LOG_INF("[%d]:adpcm_index=%d, ADPCMdecompress %u bytes", devID, adpcm_index, frame_size);
 	#if 1
-		while(adpcm_index + ADPCM_BLOCK_SIZE <= rx_payload.length)
+		if(devID == 1)
 		{
-			if(k_mem_slab_alloc(&esb_slab, (void **) &block_ptr, K_MSEC(1)) == 0)
+			while(adpcm_index + FRAME_SIZE <= frame_size)
 			{
-				dvi_adpcm_decode(&(rx_payload.data[adpcm_index]), ADPCM_BLOCK_SIZE, block_ptr, &frame_size, &m_adpcm_state);
-				// LOG_INF("[%d]:adpcm_index=%d, ADPCMdecompress %u bytes", devID, adpcm_index, frame_size);
-				// LOG_HEXDUMP_INF(block_ptr, 8, "ADPCM decompress");
-    
-				/** send the PCM data to USB audio driver*/
-				if(devID == 1)
-					err = k_msgq_put(&esb_queue1, &block_ptr, K_NO_WAIT);
-				else if(devID == 2)
-					err = k_msgq_put(&esb_queue2, &block_ptr, K_NO_WAIT);
-				else
-					err = -EINVAL;
-
-				if (err) {
-					LOG_ERR("Message sent error: %d", err);
+				err = k_msgq_put(&esb_queue1,  &pcm_block[adpcm_index], K_NO_WAIT);
+				if(!err)
+				{
+					adpcm_index += FRAME_SIZE;
 				}
-
-				adpcm_index += ADPCM_BLOCK_SIZE;
+				else 
+				{
+					break;
+				}
 			}
-			else 
-			{
-				// LOG_ERR("Memory allocation for ESB receive time-out");
-				break;
-			}	
 		}
+		else if(devID == 2)
+		{
+			while(adpcm_index + FRAME_SIZE <= frame_size)
+			{
+				err = k_msgq_put(&esb_queue1, &pcm_block[adpcm_index], K_NO_WAIT);
+				if(!err)
+				{
+					adpcm_index += FRAME_SIZE;
+				}
+				else 
+				{
+					break;
+				}
+			}
+		}
+		else
+		{
+			err = -EINVAL;
+		}
+		
 	#endif
     } 
     else 
@@ -157,7 +169,7 @@ void esb_buffer_handle(void)
 }
 
 
-void free_esb_slab_memory(void *buffer)
-{
-	k_mem_slab_free(&esb_slab, buffer);
-}
+// void free_esb_slab_memory(void *buffer)
+// {
+// 	k_mem_slab_free(&esb_slab, buffer);
+// }

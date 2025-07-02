@@ -42,16 +42,17 @@ static void mic_data_handle(void *, void *, void *)
         {
 			dvi_adpcm_encode(buffer, size, frame_buf, &frame_size,&m_adpcm_state, true);
 
-			memcpy(&(esb_tx_buf[esb_total_size]), frame_buf, frame_size);
-			esb_total_size += frame_size;
+			LOG_INF("Encoded frame size: %d", frame_size);
+			// memcpy(&(esb_tx_buf[esb_total_size]), frame_buf, frame_size);
+			// esb_total_size += frame_size;
 
-			if(esb_total_size >= MAX_PAYLOAD_SIZE)
+			// if(esb_total_size >= MAX_PAYLOAD_SIZE)
 			{
 				// esb_package_enqueue(esb_tx_buf, CONFIG_ESB_MAX_PAYLOAD_LENGTH);
-				inv_esb_package_enqueue(esb_tx_buf, sizeof(esb_tx_buf));
-				memset(esb_tx_buf, 0, MAX_PAYLOAD_SIZE);
+				inv_esb_package_enqueue(frame_buf, frame_size);
+				// memset(esb_tx_buf, 0, MAX_PAYLOAD_SIZE);
 
-				esb_total_size = 0;
+				// esb_total_size = 0;
 			}
 			// else
 			// {
