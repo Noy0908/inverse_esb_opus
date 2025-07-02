@@ -52,6 +52,13 @@ static void mono_to_stereo(int16_t* src_audio1, int16_t* src_audio2, int frames,
     {
         dst_audio[2 * i] = src_audio1[i];
         dst_audio[2 * i + 1] = src_audio2[i];
+
+		// // 左通道（Mic1）
+		// dst_audio[i*4 + 0] = src_audio1[i] & 0xFF;        // 低字节
+		// dst_audio[i*4 + 1] = (src_audio1[i] >> 8) & 0xFF; // 高字节
+		// // 右通道（Mic2）
+		// dst_audio[i*4 + 2] = src_audio2[i] & 0xFF;
+		// dst_audio[i*4 + 3] = (src_audio2[i] >> 8) & 0xFF;
     }
 }
 
@@ -61,14 +68,11 @@ static void handle_audio_data(const struct device *dev)
 	// LOG_INF("data were requested from the device and may be send to the Host!");
 	static uint32_t timeCount = 0;
 
-	if(0 == (timeCount++ % 50))
-		leds_toggle(2);
-
     int ret = 0;
     // void *frame_buffer1 = NULL;
 	// void *frame_buffer2 = NULL;
-	bool channel1_flag = false;
-	bool channel2_flag = false;
+	volatile bool channel1_flag = false;
+	volatile bool channel2_flag = false;
 	int16_t frame_buffer1[FRAME_SIZE] = {0};
 	int16_t frame_buffer2[FRAME_SIZE] = {0};
     size_t data_out_size = 0;
@@ -94,26 +98,27 @@ static void handle_audio_data(const struct device *dev)
     // LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
-		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
-		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
+		// LOG_INF("1 & 2\n");
+		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
+		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
-		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 	}
 	else if(channel1_flag)
 	{
-		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
+		// LOG_INF("1\n");
+		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE, (int16_t*)buf_out->data);
-		
 	}
 	else if(channel2_flag)
 	{
+		// LOG_INF("2\n");
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
+		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
 	{
-		LOG_ERR("Both audio buffers are NULL");
+		// LOG_ERR("Both audio buffers are NULL");
 		net_buf_unref(buf_out);
 		return;
 	}
@@ -125,33 +130,33 @@ static void handle_audio_data(const struct device *dev)
 	if (data_out_size == usb_audio_get_in_frame_size(dev)) 
 	{
 		ret = usb_audio_send(dev, buf_out, data_out_size);
-		// ret = usb_audio_send(dev, frame_buffer1, sizeof(frame_buffer1));
 		if (ret) {
 			LOG_WRN("USB TX failed, ret: %d", ret);
 			net_buf_unref(buf_out);
 		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
-	} 
-#else
-	if (data_out_size == FLASH_PAGE_SIZE) 
-    {
-		ret = soc_flash_write(total_size, buf_out->data, data_out_size);
-		if (ret) {
-			LOG_WRN("write flash failed, ret: %d", ret);
-			net_buf_unref(buf_out);
+		else
+		{	
+			if(0 == (timeCount++ % 50))
+				leds_toggle(2);
+			// LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
 		}
-		// else
-		// {	
-		// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-		// }
 	} 
-#endif
+	// if (data_out_size == FLASH_PAGE_SIZE) 
+    // {
+	// 	ret = soc_flash_write(total_size, buf_out->data, data_out_size);
+	// 	if (ret) {
+	// 		LOG_WRN("write flash failed, ret: %d", ret);
+	// 		net_buf_unref(buf_out);
+	// 	}
+	// 	// else
+	// 	// {	
+	// 	// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
+	// 	// }
+	// } 
     else 
+#endif
     {
-		LOG_WRN("Wrong size write: %d", data_out_size);
+		// LOG_WRN("Wrong size write: %d", data_out_size);
 		net_buf_unref(buf_out);
 	}
 }
@@ -209,45 +214,43 @@ void esb_buffer_handle(void)
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 																			
-		// LOG_INF("devId= %d, Decompressed frame size(samples) = %d\n", devID, frame_size);
+		LOG_INF("%d--%d", devID, frame_size);
 
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
 			while(pcm_index + FRAME_SIZE <= frame_size )
 			{
-				// LOG_INF("esb_queue1: pcm_index = %d", pcm_index);
 				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
-				if(!err)
-				{
-					pcm_index += FRAME_SIZE;
-				}
-				else
+				pcm_index += FRAME_SIZE;
+				if(err)
 				{
 					LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
 				}
 			}
+			// LOG_INF("esb_queue1: %d", pcm_index);
 		}
 		else if(devID == 2)
-		{
+		{	
 			while(pcm_index + FRAME_SIZE <= frame_size)
 			{
-				// LOG_INF("esb_queue2: pcm_index = %d", pcm_index);
 				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);
-				if(!err)
+				pcm_index += FRAME_SIZE;
+				if(err)
 				{
-					pcm_index += FRAME_SIZE;
+					LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
 				}
 			}
+			// LOG_INF("esb_queue2: %d", pcm_index);
 		}
 		else
 		{
 			err = -EINVAL;
 		}
 				
-		if (err) {
-			LOG_ERR("Message sent error: %d", err);
-		}
+		// if (err) {
+		// 	LOG_ERR("Message sent error: %d", err);
+		// }
     } 
     else 
     {

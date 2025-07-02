@@ -13,7 +13,7 @@
 
 #define USB_FRAME_SIZE_STEREO               (((MAX_SAMPLE_RATE * BYTES_PER_SAMPLE) / 1000) *2)
 
-#define CONFIG_FIFO_FRAME_SPLIT_NUM         10
+#define CONFIG_FIFO_FRAME_SPLIT_NUM         100
 
 
 
@@ -30,7 +30,6 @@
 #define ESB_BLOCK_COUNT             10
 #define PCM_BLOCK_COUNT             100
 
-// void handle_audio_data(void);
 
 
 #endif
