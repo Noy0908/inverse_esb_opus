@@ -38,7 +38,7 @@ void *block_ptr = NULL;
 extern dvi_adpcm_state_t m_adpcm_state;
 
 
-extern int led_on_off(uint8_t idx, bool on);
+extern int leds_toggle(uint8_t idx);
 
 
 static int received_esb_package_enqueue(uint8_t devID, const uint8_t *buf, uint32_t length)
@@ -60,14 +60,19 @@ static int received_esb_package_enqueue(uint8_t devID, const uint8_t *buf, uint3
 
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
+	static uint32_t timeCount1 = 0;
+	static uint32_t timeCount2 = 0;
+
 	switch(p_event->evt_id) {
 	case RADIO_EVENT_CENTRAL_DATA_RCV:
 		if (p_event->data_len) {
 			// Toggle one of the LEDs.
 			if (p_event->periph_num == 1) {
-				led_on_off(0, p_event->data[0] & 0x1);
+				if(0 == (timeCount1++ % 50))
+					leds_toggle(0);
 			} else if (p_event->periph_num == 2) {
-				led_on_off(1, p_event->data[0] & 0x1);
+				if(0 == (timeCount2++ % 50))
+					leds_toggle(1);
 			} 
 			// LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
 
@@ -106,7 +111,6 @@ void inverse_esb_init(void)
 
 void esb_buffer_handle(void)
 {
-#if 1
     int err = 0;
     int frame_size = 0;
 	uint8_t adpcm_index = 0;
@@ -140,7 +144,7 @@ void esb_buffer_handle(void)
 		{
 			while(adpcm_index + FRAME_SIZE <= frame_size)
 			{
-				err = k_msgq_put(&esb_queue1, &pcm_block[adpcm_index], K_NO_WAIT);
+				err = k_msgq_put(&esb_queue2, &pcm_block[adpcm_index], K_NO_WAIT);
 				if(!err)
 				{
 					adpcm_index += FRAME_SIZE;
@@ -155,8 +159,6 @@ void esb_buffer_handle(void)
 		{
 			err = -EINVAL;
 		}
-		
-	#endif
     } 
     else 
     {

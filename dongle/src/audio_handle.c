@@ -86,14 +86,17 @@ static void handle_audio_data(const struct device *dev)
     // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
+		// LOG_INF("1 & 2");
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
 	}
 	else if(channel1_flag)
 	{
+		// LOG_INF("1");
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE/2, (int16_t*)buf_out->data);
 	}
 	else if(channel2_flag)
 	{
+		// LOG_INF("2");
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE/2, (int16_t*)buf_out->data);
 	}
