@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
 /** opus variables and functions */
 #define OPUS_ENCODER_SIZE   7180
-#define OPUS_DECODER_SIZE   9224
+
 
 __ALIGN(4) static uint8_t m_opus_encoder[OPUS_ENCODER_SIZE];
 static OpusEncoder * const m_opus_encoder_state = (OpusEncoder *)m_opus_encoder;
@@ -41,7 +41,7 @@ static void opus_encoder_configure(void)
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_COMPLEXITY(m_opus_complexity))                == OPUS_OK);
 
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_SIGNAL(OPUS_AUTO))                            == OPUS_OK);
-	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_LSB_DEPTH(16))                                == OPUS_OK);
+	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_LSB_DEPTH(8))                                == OPUS_OK);
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_DTX(0))                                       == OPUS_OK);
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_INBAND_FEC(0))                                == OPUS_OK);
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_PACKET_LOSS_PERC(0))                          == OPUS_OK);
@@ -78,12 +78,11 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			// LOG_INF("Encoded frame size: %d", frame_size);
+			LOG_INF("%d", frame_size);
 
 			inv_esb_package_enqueue(frame_buf, frame_size);
 	
             free_audio_memory(buffer);
-		
 		}
     }
 }

@@ -22,7 +22,7 @@
 #define BLOCK_SIZE(_sample_rate, _number_of_ms) \
 	(BYTES_PER_SAMPLE * (_sample_rate / 1000) * _number_of_ms)
 
-#define MAX_BLOCK_SIZE              (BLOCK_SIZE(MAX_SAMPLE_RATE, 1) * 10)	// 10 ms
+#define MAX_BLOCK_SIZE              (BLOCK_SIZE(MAX_SAMPLE_RATE, 1) * 5)	// 10 ms
 
 #define PCM_BLOCK_SIZE				BLOCK_SIZE(MAX_SAMPLE_RATE, 1) 			// 1 ms
 #define FRAME_SIZE                  (MAX_SAMPLE_RATE / 1000)

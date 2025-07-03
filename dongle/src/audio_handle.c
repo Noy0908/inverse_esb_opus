@@ -98,7 +98,7 @@ static void handle_audio_data(const struct device *dev)
     // LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
-		// LOG_INF("1 & 2\n");
+		LOG_INF("1 & 2\n");
 		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
 		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
@@ -215,17 +215,21 @@ void esb_buffer_handle(void)
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 																			
 		LOG_INF("%d--%d", devID, frame_size);
-
+	#if 0		
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
 			while(pcm_index + FRAME_SIZE <= frame_size )
 			{
 				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
-				pcm_index += FRAME_SIZE;
-				if(err)
+				if(!err)
 				{
-					LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					pcm_index += FRAME_SIZE;
+				}
+				else
+				{
+					// LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					break;
 				}
 			}
 			// LOG_INF("esb_queue1: %d", pcm_index);
@@ -234,11 +238,15 @@ void esb_buffer_handle(void)
 		{	
 			while(pcm_index + FRAME_SIZE <= frame_size)
 			{
-				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);
-				pcm_index += FRAME_SIZE;
-				if(err)
+				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);			
+				if(!err)
 				{
-					LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					pcm_index += FRAME_SIZE;
+				}
+				else
+				{
+					// LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					break;
 				}
 			}
 			// LOG_INF("esb_queue2: %d", pcm_index);
@@ -251,6 +259,7 @@ void esb_buffer_handle(void)
 		// if (err) {
 		// 	LOG_ERR("Message sent error: %d", err);
 		// }
+	#endif
     } 
     else 
     {
