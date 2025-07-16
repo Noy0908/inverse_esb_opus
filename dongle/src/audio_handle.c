@@ -1,8 +1,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/net_buf.h>
-#include <zephyr/usb/usb_device.h>
-#include <zephyr/usb/class/usb_audio.h>
+// #include <zephyr/usb/usb_device.h>
+// #include <zephyr/usb/class/usb_audio.h>
 #include <pcm_mix.h>
 
 #include "audio_handle.h"
@@ -23,7 +23,7 @@ NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_
 K_MSGQ_DEFINE(esb_queue1, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
 K_MSGQ_DEFINE(esb_queue2, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
 
-static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
+// static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
 
 /******************************** opus decoder variables ******************************************/
 static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
@@ -62,7 +62,7 @@ static void mono_to_stereo(int16_t* src_audio1, int16_t* src_audio2, int frames,
     }
 }
 
-
+#if 0
 static void handle_audio_data(const struct device *dev)
 {
 	// LOG_INF("data were requested from the device and may be send to the Host!");
@@ -180,7 +180,7 @@ static const struct usb_audio_ops mic_ops = {
 	.data_request_cb = handle_audio_data,
 	.feature_update_cb = feature_update,
 };
-
+#endif
 
 /*********************************opus decoder*********************************************/
 
@@ -195,7 +195,7 @@ static void opus_decoder_configure(void)
 
 void esb_buffer_handle(void)
 {
-    int err = 0;
+    // int err = 0;
     struct inv_esb_payload rx_payload;
 	int16_t block_ptr[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
 
@@ -269,27 +269,27 @@ void esb_buffer_handle(void)
 
 static void esb_audio_data_handle(void *, void *, void *)
 {
-	int ret;
+	// int ret;
 	// soc_flash_init();
 
-	if (!device_is_ready(mic_dev)) {
-		LOG_ERR("Device USB Microphone is not ready");
-		return;
-	}
-	LOG_INF("Found USB Microphone Device");
+	// if (!device_is_ready(mic_dev)) {
+	// 	LOG_ERR("Device USB Microphone is not ready");
+	// 	return;
+	// }
+	// LOG_INF("Found USB Microphone Device");
 
-	usb_audio_register(mic_dev, &mic_ops);
+	// usb_audio_register(mic_dev, &mic_ops);
 
-	ret = usb_enable(NULL);
-	if (ret != 0) {
-		LOG_ERR("Failed to enable USB");
-		return;
-	}
+	// ret = usb_enable(NULL);
+	// if (ret != 0) {
+	// 	LOG_ERR("Failed to enable USB");
+	// 	return;
+	// }
 
 	opus_decoder_configure();
 
-	LOG_INF("USB enabled");
-	LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
+	LOG_INF("opus enabled");
+	// LOG_INF("mic_frame_size = %d\t ", usb_audio_get_in_frame_size(mic_dev));
 
     while(1)
     {
@@ -301,7 +301,3 @@ static void esb_audio_data_handle(void *, void *, void *)
 K_THREAD_DEFINE(esb_audio_service, AUDIO_HANDLE_STACK_SIZE,
                 esb_audio_data_handle, NULL, NULL, NULL,
                 K_PRIO_PREEMPT(AUDIO_HANDLE_PRIORITY), 0, 0);
-
-
-
-

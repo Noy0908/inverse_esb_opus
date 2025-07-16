@@ -49,7 +49,7 @@ static int leds_init(void)
 			return err;
 		}
 
-		gpio_pin_set(leds[0].port, leds[i].pin, 0);
+		gpio_pin_set(leds[i].port, leds[i].pin, 0);
 	}
 
 	return 0;

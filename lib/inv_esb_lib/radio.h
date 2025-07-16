@@ -15,15 +15,15 @@
 #define MAX_CHANNEL_TAB		16
 
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	10
+#define MAX_PAYLOAD_SIZE	40
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
 #define MAX_PACKET_LENGTH	(PERIPH_BM_SIZE + MAX_PAYLOAD_SIZE)
 
-#define	RADIO_RTC			NRF_RTC0
+// #define	RADIO_RTC			NRF_RTC0
 
-#define RADIO_RTC_IRQn		RTC0_IRQn
+// #define RADIO_RTC_IRQn		RTC0_IRQn
 
 
 typedef enum
@@ -61,7 +61,7 @@ typedef enum {
     RADIO_TX_POWER_NEG12DBM = RADIO_TXPOWER_TXPOWER_Neg12dBm, /**< -12 dBm radio transmit power. */
     RADIO_TX_POWER_NEG16DBM = RADIO_TXPOWER_TXPOWER_Neg16dBm, /**< -16 dBm radio transmit power. */
     RADIO_TX_POWER_NEG20DBM = RADIO_TXPOWER_TXPOWER_Neg20dBm, /**< -20 dBm radio transmit power. */
-    RADIO_TX_POWER_NEG30DBM = RADIO_TXPOWER_TXPOWER_Neg30dBm, /**< -30 dBm radio transmit power. */
+    RADIO_TX_POWER_NEG28DBM = RADIO_TXPOWER_TXPOWER_Neg28dBm, /**< -30 dBm radio transmit power. */
     RADIO_TX_POWER_NEG40DBM = RADIO_TXPOWER_TXPOWER_Neg40dBm  /**< -40 dBm radio transmit power. */
 } radio_power_t;
 

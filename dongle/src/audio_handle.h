@@ -1,3 +1,4 @@
+
 #ifndef __USB_AUDIO_APP_H__
 #define __USB_AUDIO_APP_H__
 
@@ -33,9 +34,3 @@
 
 
 #endif
-
-
-
-
-
-

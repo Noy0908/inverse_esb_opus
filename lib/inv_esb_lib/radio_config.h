@@ -53,7 +53,7 @@
 
 
 #define RADIO_RTC_EVENT_TICKS		               4   // 2ms, 0.5ms per tick
-			
+#define EVENT_US	                              1000 // 1ms			
 
 #define CENTRAL_TIMER_SCAN_US		               1500 //1.5ms, 1 us per tick		
 #define PERIPH_TIMER_SCAN_US		               3000 //2ms, 1 us per tick			
