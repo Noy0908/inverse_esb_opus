@@ -410,11 +410,12 @@ static void central_send_poll_packet(void)
 	
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
+#endif
 
 	static uint32_t timeCount = 0;
-	if(0 == (timeCount++ % 50))
+	if(0 == (timeCount++ % 100))
 		leds_toggle(3);
-#endif
+
 
 #ifdef CONFIG_RADIO_PKT_CNT 	
 	m_periph_cnt[NUM_OF_PERIPHS]++;

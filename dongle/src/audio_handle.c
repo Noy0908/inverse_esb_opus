@@ -201,7 +201,7 @@ void esb_buffer_handle(void)
 
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-		uint8_t pcm_index = 0;
+		// uint8_t pcm_index = 0;
 		int frame_size = 0;
 		uint8_t devID = rx_payload.dev_id;
 

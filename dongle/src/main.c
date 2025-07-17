@@ -61,7 +61,7 @@ int leds_toggle(uint8_t idx)
 {
 	// for (size_t i = 0; i < ARRAY_SIZE(leds); i++) 
 	{
-		gpio_pin_toggle(leds[0].port, leds[idx].pin);
+		gpio_pin_toggle(leds[idx].port, leds[idx].pin);
 	}
 
 	return 0;
