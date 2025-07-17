@@ -94,7 +94,7 @@ K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
                 K_PRIO_PREEMPT(7), 0, 0);
 
 
-extern void turn_on_off_led(bool onOff);
+extern void turn_on_off_led(uint8_t idx, bool onOff);
 static bool mic_work_event_handler(const struct app_event_header *aeh)
 {
 	if (is_mic_work_event(aeh)) 
@@ -110,12 +110,12 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 				LOG_INF("Radio start");
 			}
 
-            LOG_INF("Micphone start to work!");
-			drv_mic_start();
+            // LOG_INF("Micphone start to work!");
+			// drv_mic_start();
 
-			k_thread_resume(sound_service);
+			// k_thread_resume(sound_service);
 			
-			turn_on_off_led(true);
+			turn_on_off_led(0, true);
 		}
 		else if(event->type == MIC_STATUS_STOP)
 		{
@@ -124,14 +124,14 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 
 			k_thread_suspend(sound_service);
 
-            turn_on_off_led(false);
+            turn_on_off_led(0, false);
 			/** radio work longer to  send the rest audio frame */
-			if(radio_is_up)
-			{
-				radio_stop();
-				radio_is_up = false;
-				LOG_INF("Radio stop");
-			}
+			// if(radio_is_up)
+			// {
+			// 	radio_stop();
+			// 	radio_is_up = false;
+			// 	LOG_INF("Radio stop");
+			// }
 		}
 
 		return true;

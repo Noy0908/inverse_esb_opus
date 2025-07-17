@@ -89,22 +89,15 @@ static int leds_init(void)
 }
 
 
-void turn_on_off_led(bool onOff)
+void turn_on_off_led(uint8_t idx, bool onOff)
 {
-	size_t i = 0;
 	if(onOff == true)
 	{
-		for ( i=0; i < ARRAY_SIZE(leds); i++) 
-		{	
-			gpio_pin_set(leds[0].port, leds[i].pin, 1);
-		}
+		gpio_pin_set(leds[idx].port, leds[idx].pin, 1);
 	}
 	else
-	{
-		for (i = 0; i < ARRAY_SIZE(leds); i++) 
-		{	
-			gpio_pin_set(leds[0].port, leds[i].pin, 0);
-		}
+	{	
+		gpio_pin_set(leds[idx].port, leds[idx].pin, 0);
 	}
 }
 
@@ -178,7 +171,7 @@ int main(void)
 		LOG_ERR("Cannot init buttons (err: %d)\n", err);
 	}
 
-	drv_audio_init();
+	// drv_audio_init();
 
 	err = app_event_manager_init();
 	if (err) {

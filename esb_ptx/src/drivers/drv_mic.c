@@ -21,33 +21,33 @@ LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
 K_MEM_SLAB_DEFINE_STATIC(mem_slab, MAX_BLOCK_SIZE , BLOCK_COUNT, 4);
 
 
-static const struct gpio_dt_spec mic_power = GPIO_DT_SPEC_GET(DT_NODELABEL(mic_pwr), enable_gpios);
+// static const struct gpio_dt_spec mic_power = GPIO_DT_SPEC_GET(DT_NODELABEL(mic_pwr), enable_gpios);
 
 static const struct device * dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
 
 
-static void mic_power_on(void)
-{
-    uint32_t ret;
+// static void mic_power_on(void)
+// {
+//     uint32_t ret;
 
-	ret = gpio_pin_set(mic_power.port, mic_power.pin, 1);
-	if (ret < 0) {
-		LOG_ERR("Failed to power on the micphone: %d!", ret);
-		return ;
-	}
-}
+// 	ret = gpio_pin_set(mic_power.port, mic_power.pin, 1);
+// 	if (ret < 0) {
+// 		LOG_ERR("Failed to power on the micphone: %d!", ret);
+// 		return ;
+// 	}
+// }
 
 
-static void mic_power_off(void)
-{
-    uint32_t ret;
+// static void mic_power_off(void)
+// {
+//     uint32_t ret;
 
-    ret = gpio_pin_set(mic_power.port, mic_power.pin, 0);
-	if (ret < 0) {
-		LOG_ERR("Failed to power off the micphone: %d!", ret);
-		return ;
-	}
-}
+//     ret = gpio_pin_set(mic_power.port, mic_power.pin, 0);
+// 	if (ret < 0) {
+// 		LOG_ERR("Failed to power off the micphone: %d!", ret);
+// 		return ;
+// 	}
+// }
 
 
 int drv_audio_init(void)
@@ -59,10 +59,10 @@ int drv_audio_init(void)
 		return -1;
 	}
 
-	if (!gpio_is_ready_dt(&mic_power)) {
-		LOG_ERR("The micphone goio pin is not enable!!!!");
-		return -1;
-	}
+	// if (!gpio_is_ready_dt(&mic_power)) {
+	// 	LOG_ERR("The micphone goio pin is not enable!!!!");
+	// 	return -1;
+	// }
 
 	struct pcm_stream_cfg stream = {
 		.pcm_width = SAMPLE_BIT_WIDTH,
@@ -113,18 +113,7 @@ int drv_mic_start(void)
 
     LOG_INF("m_audio: Enabled\r\n");
 
-    // if(m_audio_enabled == true)
-    // {
-    //     return NRF_SUCCESS;
-    // }
-
-    mic_power_on();
-
-    // status = drv_audio_enable();
-    // if (status == NRF_SUCCESS)
-    // {
-    //     m_audio_enabled = true;
-    // }
+    // mic_power_on();
 
 	ret = dmic_trigger(dmic_dev, DMIC_TRIGGER_START);
 	if (ret < 0) {
@@ -141,23 +130,12 @@ int drv_mic_stop(void)
 
     LOG_INF("m_audio: Disabled\r\n");
 
-    // if(m_audio_enabled == false)
-    // {
-    //     return NRF_SUCCESS;
-    // }
-
-    // status = drv_audio_disable();
-    // if (status == NRF_SUCCESS)
-    // {
-    //     m_audio_enabled = false;
-    // }
-
 	ret = dmic_trigger(dmic_dev, DMIC_TRIGGER_STOP);
 	if (ret < 0) {
 		LOG_ERR("STOP m_audio failed: %d", ret);
 	}
 
-    mic_power_off();
+    // mic_power_off();
 
     return ret;
 }

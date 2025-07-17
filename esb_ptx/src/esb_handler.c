@@ -14,7 +14,6 @@ LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
 
-extern void turn_on_off_led(bool onOff);
 
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
