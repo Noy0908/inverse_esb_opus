@@ -57,9 +57,10 @@ static struct gpio_callback button_cb_data;
 
 
 static const struct gpio_dt_spec leds[] = {
-	// GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios),
+	GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios),
 	GPIO_DT_SPEC_GET(DT_ALIAS(led1), gpios),
 	GPIO_DT_SPEC_GET(DT_ALIAS(led2), gpios),
+	GPIO_DT_SPEC_GET(DT_ALIAS(led3), gpios),
 };
 
 
@@ -82,7 +83,7 @@ static int leds_init(void)
 			LOG_ERR("Cannot configure LED gpio");
 			return err;
 		}
-		gpio_pin_set(leds[0].port, leds[i].pin, 0);
+		gpio_pin_set(leds[i].port, leds[i].pin, 0);
 	}
 
 	return 0;
@@ -99,6 +100,13 @@ void turn_on_off_led(uint8_t idx, bool onOff)
 	{	
 		gpio_pin_set(leds[idx].port, leds[idx].pin, 0);
 	}
+}
+
+int leds_toggle(uint8_t idx) 
+{
+	gpio_pin_toggle(leds[idx].port, leds[idx].pin);
+
+	return 0;
 }
 
 

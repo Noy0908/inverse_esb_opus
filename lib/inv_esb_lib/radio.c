@@ -15,6 +15,12 @@
 #include <hal/nrf_timer.h>
 // #include <hal/nrf_rtc.h>
 #include <helpers/nrfx_gppi.h>
+
+#if defined(DPPI_PRESENT)
+#include <nrfx_dppi.h>
+#else
+#include <nrfx_ppi.h>
+#endif
 #include <nrfx_timer.h>
 
 LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
@@ -30,7 +36,7 @@ LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 #endif
 
 #define RADIO_TIMER			NRFX_CONCAT_2(NRF_TIMER,CONFIG_RADIO_TIMER_INSTANCE)
-// static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANCE);
+static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANCE);
 
 #ifdef CONFIG_RADIO_PKT_CNT 
 static uint16_t * m_periph_cnt; 
@@ -71,8 +77,8 @@ static uint8_t poll_packet[] = { 1,  2,  3,  4,  5,  6,  7,  8,
 #endif
 
 
-// static uint8_t ppi_ch_timer_compare0_radio_disable;
-// static uint8_t ppi_ch_timer_compare0_radio_txen;
+static uint8_t ppi_ch_timer_compare0_radio_disable;
+static uint8_t ppi_ch_timer_compare0_radio_txen;
 
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 static const struct device *dbg_port= DEVICE_DT_GET(DT_NODELABEL(gpio0));
@@ -597,12 +603,12 @@ static void inv_esb_start_tx(const struct inv_esb_payload *payload)
 	m_radio_state = PERIPH_TX_STATE;
 	NRF_RADIO->TASKS_TXEN = 1;
 
-	// //Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
-	// nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
-	// //Enable PPI channel : ppi_ch_timer_compare0_radio_txen
-	// nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_txen));
-	// //Start radio timer
-	// radio_timer_clear_start(PERIPH_TIMER_TX_DELAY_PERIOD * m_dev_num);
+	//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
+	nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
+	//Enable PPI channel : ppi_ch_timer_compare0_radio_txen
+	nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_txen));
+	//Start radio timer
+	radio_timer_clear_start(PERIPH_TIMER_TX_DELAY_PERIOD * m_dev_num);
 	
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
@@ -735,9 +741,9 @@ static void timer_periph_event_handler(void)
 		NRF_RADIO->TASKS_DISABLE = 1;
 	}
 
-	if (rx_state== RX_OPERATE)
+	if(rx_state== RX_OPERATE)
 	{
-		if ( loss_cnt == sizeof(RF_CHANNEL_TAB))
+		if (loss_cnt == sizeof(RF_CHANNEL_TAB))
 		{
 			rx_state = RX_SEARCH;
 			is_rx_on = false;				//make sure that the receiver continuously on 
@@ -755,7 +761,7 @@ static void timer_periph_event_handler(void)
 			RADIO_TIMER->TASKS_START = 1;
 			loss_cnt++;
 			//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
-			// nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
+			nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
 		}  
 						
 		if(m_periph_is_poll_rcv)
@@ -818,7 +824,7 @@ static void timer_periph_event_handler(void)
 }
 
 
-static bool peripheral_handle_pull_packet(void)
+static bool peripheral_handle_poll_packet(void)
 {
 	/** notice application that you have received the poll packet */
 	radio_evt_t	m_radio_event;
@@ -872,7 +878,7 @@ static void on_periph_disabled(void)
 			hf_clock_stop();	
 			m_radio_state = IDLE_STATE;			
 			//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
-			// nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
+			nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
 			return;	
 		}
 		/** Radio generate irq after packet received finished */	
@@ -887,7 +893,7 @@ static void on_periph_disabled(void)
 			rssi = -NRF_RADIO->RSSISAMPLE;
 			loss_cnt = 0;   
 			// LOG_INF("Poll packet received, RSSI: %d", rssi);
-			peripheral_handle_pull_packet();
+			peripheral_handle_poll_packet();
 			          
              
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
@@ -922,7 +928,7 @@ static void on_periph_disabled(void)
 			hf_clock_stop();
 			m_radio_state = IDLE_STATE;
 			//Disable PPI channel : ppi_ch_timer_compare0_radio_txen
-			// nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_txen));  
+			nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_txen));  
 	}		
 }	
 
@@ -998,17 +1004,17 @@ void radio_stop(void)
 
 	//Stop radio
 	NRF_RADIO->SHORTS = 0;
-	NRF_RADIO->INTENSET00 = 0xFFFFFFFF;
+	NRF_RADIO->INTENSET00 = NRF_RADIO_INT_DISABLED_MASK;
 	NRF_RADIO->EVENTS_DISABLED = 0;
 	NRF_RADIO->TASKS_DISABLE = 1;
 	while (NRF_RADIO->EVENTS_DISABLED == 0) {
 		/* wait for register to settle */
 	}
-	// if (!m_is_central) {
-	// 	nrfx_gppi_channels_disable(
-	// 		BIT(ppi_ch_timer_compare0_radio_disable) |
-	// 		BIT(ppi_ch_timer_compare0_radio_txen));
-	// }
+	if (!m_is_central) {
+		nrfx_gppi_channels_disable(
+			BIT(ppi_ch_timer_compare0_radio_disable) |
+			BIT(ppi_ch_timer_compare0_radio_txen));
+	}
 	m_radio_state = IDLE_STATE;
 }
 
@@ -1119,33 +1125,33 @@ static void dbg_pins_init(void)
 #endif
 
 
-// static void radio_ppi_init(void)
-// {
-// 	nrfx_err_t nrfx_err;
+static void radio_ppi_init(void)
+{
+	nrfx_err_t nrfx_err;
 
-// 	nrfx_err = nrfx_gppi_channel_alloc(&ppi_ch_timer_compare0_radio_disable);
-// 	if (nrfx_err != NRFX_SUCCESS) {
-// 		LOG_ERR("Failed to allocate PPI channel for radio disable");
-// 	}
-// 	nrfx_err = nrfx_gppi_channel_alloc(&ppi_ch_timer_compare0_radio_txen);
-// 	if (nrfx_err != NRFX_SUCCESS) {
-// 		LOG_ERR("Failed to allocate PPI channel for radio txen");
-// 	}
+	nrfx_err = nrfx_gppi_channel_alloc(&ppi_ch_timer_compare0_radio_disable);
+	if (nrfx_err != NRFX_SUCCESS) {
+		LOG_ERR("Failed to allocate PPI channel for radio disable");
+	}
+	nrfx_err = nrfx_gppi_channel_alloc(&ppi_ch_timer_compare0_radio_txen);
+	if (nrfx_err != NRFX_SUCCESS) {
+		LOG_ERR("Failed to allocate PPI channel for radio txen");
+	}
 	
-// 	nrfx_gppi_channel_endpoints_setup(ppi_ch_timer_compare0_radio_disable,
-// 			nrfx_timer_event_address_get(&radio_timer, NRF_TIMER_EVENT_COMPARE0),
-// 			nrf_radio_task_address_get(NRF_RADIO, NRF_RADIO_TASK_DISABLE));
+	nrfx_gppi_channel_endpoints_setup(ppi_ch_timer_compare0_radio_disable,
+			nrfx_timer_event_address_get(&radio_timer, NRF_TIMER_EVENT_COMPARE0),
+			nrf_radio_task_address_get(NRF_RADIO, NRF_RADIO_TASK_DISABLE));
 	
-// 	nrfx_gppi_channel_endpoints_setup(ppi_ch_timer_compare0_radio_txen,
-// 			nrfx_timer_event_address_get(&radio_timer, NRF_TIMER_EVENT_COMPARE0),
-// 			nrf_radio_task_address_get(NRF_RADIO, NRF_RADIO_TASK_TXEN));
+	nrfx_gppi_channel_endpoints_setup(ppi_ch_timer_compare0_radio_txen,
+			nrfx_timer_event_address_get(&radio_timer, NRF_TIMER_EVENT_COMPARE0),
+			nrf_radio_task_address_get(NRF_RADIO, NRF_RADIO_TASK_TXEN));
 
-// 	if(m_is_central)
-// 	{
-// 		//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
-// 		nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
-// 	}
-// }
+	if(m_is_central)
+	{
+		//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
+		nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
+	}
+}
 
 
 int radio_setup(const radio_init_t *init)
@@ -1250,7 +1256,7 @@ int radio_setup(const radio_init_t *init)
 	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;         
 	base_addr_fill_in();
     NRF_RADIO->PACKETPTR    = (uint32_t)dma_buf;
-#ifdef CONFIG_MULTIACK_CENTRAL
+
 	// Radio Timer IRQ settings
 	IRQ_DIRECT_CONNECT(TIMER10_IRQn, 1, TIMER10_IRQHandler, 0);
 	irq_enable(TIMER10_IRQn);
@@ -1258,9 +1264,8 @@ int radio_setup(const radio_init_t *init)
 	NVIC_SetPriority(TIMER10_IRQn, 1);
 	NVIC_EnableIRQ(TIMER10_IRQn);
 	RADIO_TIMER->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-#else 
-	// radio_ppi_init();			// only works for peripheral
-#endif
+
+	radio_ppi_init();			// only works for peripheral
 
 	radio_timer_init();
 	// radio_rtc_init();

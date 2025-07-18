@@ -74,7 +74,7 @@ int led_on_off(uint8_t idx, bool on)
 		return -EINVAL;
 	}
 
-	int err = gpio_pin_set(leds[0].port, leds[idx].pin, on ? 1 : 0);
+	int err = gpio_pin_set(leds[idx].port, leds[idx].pin, on ? 1 : 0);
 	if (err) {
 		LOG_ERR("Failed to set LED%u state, err %d", idx, err);
 		return err;
@@ -82,6 +82,7 @@ int led_on_off(uint8_t idx, bool on)
 
 	return 0;
 }
+
 
 
 int clocks_start(void)

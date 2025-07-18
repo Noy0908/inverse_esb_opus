@@ -15,6 +15,8 @@ static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
 
 
+extern int leds_toggle(uint8_t idx);
+
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
 	switch(p_event->evt_id) {
@@ -26,6 +28,7 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 				delete_tx_item_from_queue();
 			}
 		}
+		leds_toggle(1);
 		break;
 	default:
 		break;
