@@ -33,11 +33,11 @@
 #define PIN_DBG_02             5
 #define PIN_DBG_03             4
 #else
-#define PIN_CHANNEL_HOP       31 // indicate channel hopping when it is toggled
-#define PIN_DATA_RX           30 // indicate data is received
-#define PIN_DATA_TX           29 // indicate ack data is sent
-#define PIN_DBG_01            28
-#define PIN_DBG_02             4
+#define PIN_CHANNEL_HOP       0 // indicate channel hopping when it is toggled
+#define PIN_DATA_RX           1 // indicate data is received
+#define PIN_DATA_TX           2 // indicate ack data is sent
+#define PIN_DBG_01            3
+// #define PIN_DBG_02             4
 #define PIN_DBG_03             3
 #endif
 

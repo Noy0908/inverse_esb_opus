@@ -82,7 +82,7 @@ static uint8_t ppi_ch_timer_compare0_radio_txen;
 
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 static const struct device *dbg_port= DEVICE_DT_GET(DT_NODELABEL(gpio0));
-static const uint8_t dbg_pins[] = {PIN_CHANNEL_HOP, PIN_DATA_RX, PIN_DATA_TX, PIN_DBG_01, PIN_DBG_02, PIN_DBG_03};
+static const uint8_t dbg_pins[] = {PIN_CHANNEL_HOP, PIN_DATA_RX, PIN_DATA_TX, PIN_DBG_01};
 
 #endif
 
@@ -885,9 +885,9 @@ static void on_periph_disabled(void)
 		if ((NRF_RADIO->CRCSTATUS & (RADIO_CRCSTATUS_CRCSTATUS_CRCOk << RADIO_CRCSTATUS_CRCSTATUS_Pos)) &&
 		    !dma_buf[0])  // check also it is the poll packet that sent by central but not the other peripherals
 		{
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-			gpio_pin_set(dbg_port, PIN_DBG_02, 1);
-#endif
+// #ifdef CONFIG_MULTIACK_DEBUG_GPIO
+// 			gpio_pin_set(dbg_port, PIN_DBG_02, 1);
+// #endif
 			//poll packet received	
 			m_periph_is_poll_rcv = true;
 			rssi = -NRF_RADIO->RSSISAMPLE;
@@ -896,9 +896,9 @@ static void on_periph_disabled(void)
 			peripheral_handle_poll_packet();
 			          
              
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-			gpio_pin_set(dbg_port, PIN_DBG_02, 0);
-#endif
+// #ifdef CONFIG_MULTIACK_DEBUG_GPIO
+// 			gpio_pin_set(dbg_port, PIN_DBG_02, 0);
+// #endif
 			// ready to send data back to central
 			if (rx_state == RX_SEARCH)
 			{
@@ -967,6 +967,10 @@ void radio_start_receive(void)
 
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 	gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
+
+	gpio_pin_set(dbg_port, PIN_CHANNEL_HOP, 1);
+	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
+	gpio_pin_set(dbg_port, PIN_DBG_01, 1);
 #endif
 }
 
