@@ -601,7 +601,7 @@ static void inv_esb_start_tx(const struct inv_esb_payload *payload)
  
 	//Set TX state in advance
 	m_radio_state = PERIPH_TX_STATE;
-	NRF_RADIO->TASKS_TXEN = 1;
+	// NRF_RADIO->TASKS_TXEN = 1;
 
 	//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
 	nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
