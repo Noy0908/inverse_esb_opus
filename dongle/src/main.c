@@ -136,7 +136,7 @@ int main(void)
 	}
 
 	inverse_esb_init();
-
+	
 	radio_start_poll();
 
 	LOG_DBG("Inverse esb dongle demo, fw_version is %s", FW_VERSION);

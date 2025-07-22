@@ -95,8 +95,6 @@ static void (*on_radio_rtc_interrupt)(void) = 0;
 static void (*on_radio_disabled_interrupt)(void) = 0;
 
 
-void radio_rtc_irq_handler(int32_t id, uint64_t expire_time, void *user_data);
-
 
 static uint64_t addr_fix(uint64_t total_address)
 {
@@ -306,77 +304,116 @@ __INLINE static void radio_timer_stop(void)
 }
 
 
-#if 1
 
-static int32_t channel;
-static uint32_t delay_ms = 0;
-
-__INLINE static void radio_rtc_init(void)
+#ifdef CONFIG_MULTIACK_DEBUG_GPIO
+static void dbg_pins_init(void)
 {
-	/** Allocate GRTC capture/compare channel */
-	channel = z_nrf_grtc_timer_chan_alloc();
-	if (channel < 0) {
-		LOG_ERR("Failed to allocate GRTC channel, chan=%d\n", channel);
-	}
-	LOG_INF("Allocated GRTC channel %d\n", channel);
-}
-
-
-
-/**@brief Function for starting radio RTC.
- */ 
-static int radio_rtc_start(uint32_t value_ms)
-{
-   	int err;
-	uint64_t set_ticks = 0;
-
-	if(channel < 0) {
-		/** Allocate GRTC capture/compare channel */
-		channel = z_nrf_grtc_timer_chan_alloc();
-		if (channel < 0) {
-			LOG_ERR("Failed to allocate GRTC channel, chan=%d\n", channel);
-		}
-		LOG_INF("Allocated GRTC channel %d\n", channel);
-	}
-
-	delay_ms = value_ms;
-
-	set_ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(value_ms));
-	/** Set compare channel to given value */
-	err = z_nrf_grtc_timer_set(channel, set_ticks, radio_rtc_irq_handler, NULL);
-	if(err)
+	int err;
+	
+	if (!device_is_ready(dbg_port)) 
 	{
-		LOG_ERR("Failed to set GRTC timer, err=%d\n", err);
-		return err;
+		LOG_ERR("Could not bind to debug port");
 	}
-
-	return err;
+	
+	for (size_t i = 0; i < ARRAY_SIZE(dbg_pins); i++) 
+	{
+		err = gpio_pin_configure(dbg_port, dbg_pins[i], GPIO_OUTPUT);
+		if (err) 
+		{
+			LOG_ERR("Unable to configure radio debug port");
+			dbg_port = NULL;
+		}
+						
+		gpio_pin_set(dbg_port, dbg_pins[i], 0); 
+	}
 }
+#endif
 
-
-/**@brief Function for stopping radio RTC.
- */
- __INLINE static void radio_rtc_stop_clear(void)
-{
-    /** Abort a timer requested with z_nrf_grtc_timer_set(). */
-	z_nrf_grtc_timer_abort(channel);
-}
+#if 1
 
 /**@brief Function for setting the RTC Capture Compare register 0, and enabling the corresponding
  *        event.
  *
  * @param[in] value   New value of Capture Compare register 0.
  */
-__INLINE static void radio_rtc_compare0_set(uint32_t value)
+__INLINE static void radio_grtc_compare0_set(uint32_t value)
 {
-	radio_rtc_start(value);
+	// RADIO_RTC->CC[0] = value;
+	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(value));
+    uint32_t cc_h = (uint32_t)(ticks >> 32);
+    NRF_GRTC->CC[0].CCL = (uint32_t)ticks;
+    NRF_GRTC->CC[0].CCH = cc_h & NRF_GRTC_SYSCOUNTER_CCH_MASK;
 }
 
 
-__INLINE static void radio_rtc_clear_count(void)
+__INLINE static void radio_grtc_clear_count(void)
 {
-	radio_rtc_stop_clear();
+	NRF_GRTC->TASKS_CLEAR =1;
 }	
+
+/**
+ * @brief Handler for radio timer events.
+ */
+static void radio_grtc_irq_handler(void)
+{
+   if (NRF_GRTC->EVENTS_COMPARE[0] == 1)
+   {
+		NRF_GRTC->EVENTS_COMPARE[0] =0;         //clear timer compare event
+#ifdef CONFIG_MULTIACK_DEBUG_GPIO
+		gpio_pin_toggle(dbg_port, PIN_CHANNEL_HOP);
+#endif   
+		if(on_radio_rtc_interrupt)
+			on_radio_rtc_interrupt();
+
+		// radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
+   }
+}	
+
+
+ISR_DIRECT_DECLARE(GRTC_IRQHandler)
+{
+	radio_grtc_irq_handler();
+	return 0;
+}
+
+
+__INLINE static void radio_grtc_init(void)
+{
+	// Radio RTC IRQ settings - highest priority
+	IRQ_DIRECT_CONNECT(GRTC_IRQn, 0 ,
+						GRTC_IRQHandler, 0);
+	irq_enable(GRTC_IRQn);
+	NVIC_ClearPendingIRQ(GRTC_IRQn);
+	NVIC_SetPriority(GRTC_IRQn,0);
+    NVIC_EnableIRQ(GRTC_IRQn);
+	NRF_GRTC->GRTC_INTENSET = GRTC_INTENSET0_COMPARE0_Msk;
+}
+
+
+/**@brief Function for starting radio RTC.
+ */ 
+static void radio_grtc_start(uint32_t delay_ms)
+{
+	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(delay_ms));
+    uint32_t cc_h = (uint32_t)(ticks >> 32);
+    NRF_GRTC->CC[0].CCL = (uint32_t)ticks;
+    NRF_GRTC->CC[0].CCH = cc_h & NRF_GRTC_SYSCOUNTER_CCH_MASK;
+
+	NRF_GRTC->GRTC_INTENSET     = GRTC_INTENSET0_COMPARE0_Msk;
+	NRF_GRTC->TASKS_CLEAR	=1;
+	NRF_GRTC->TASKS_START	=1;
+}
+
+/**@brief Function for stopping radio RTC.
+ */
+ __INLINE static void radio_rtc_stop_clear(void)
+{
+    NRF_GRTC->TASKS_STOP = 1;
+    NRF_GRTC->TASKS_CLEAR = 1;
+	NRF_GRTC->GRTC_INTENCLR = GRTC_INTENSET0_COMPARE0_Msk; 
+}
+
+
 #endif
 
 
@@ -442,36 +479,38 @@ static void central_send_poll_packet(void)
 #endif     
 }
 
-// static void rtc_central_event_handler(void)
+static void rtc_central_event_handler(void)
+{
+	radio_grtc_clear_count();
+
+	//Start HF clock for radio and timer
+	hf_clock_start(); 
+
+	NRF_RADIO->SHORTS       =  RADIO_SHORTS_COMMON;
+
+	NRF_RADIO->INTENSET00     =  RADIO_INTENSET00_DISABLED_Msk; 
+
+	radio_hop_channel();
+
+	central_send_poll_packet();
+
+	radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
+}
+
+// static void timer_central_event_handler(void)
 // {
-// 	radio_rtc_clear_count();
+// 	if (m_radio_state != IDLE_STATE) {
+// 		m_radio_state = IDLE_STATE;
+// 		NRF_RADIO->TASKS_DISABLE = 1;
+// 	}
+// 	NRF_RADIO->SHORTS = RADIO_SHORTS_COMMON;
 
-// 	//Start HF clock for radio and timer
-// 	hf_clock_start(); 
-
-// 	NRF_RADIO->SHORTS       =  RADIO_SHORTS_COMMON;
-
-// 	NRF_RADIO->INTENSET00     =  RADIO_INTENSET00_DISABLED_Msk; 
+// 	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;
 
 // 	radio_hop_channel();
 
 // 	central_send_poll_packet();
 // }
-
-static void timer_central_event_handler(void)
-{
-	if (m_radio_state != IDLE_STATE) {
-		m_radio_state = IDLE_STATE;
-		NRF_RADIO->TASKS_DISABLE = 1;
-	}
-	NRF_RADIO->SHORTS = RADIO_SHORTS_COMMON;
-
-	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;
-
-	radio_hop_channel();
-
-	central_send_poll_packet();
-}
 
 
 static void on_central_disabled(void)
@@ -491,6 +530,7 @@ static void on_central_disabled(void)
 				
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
+		gpio_pin_toggle(dbg_port, PIN_DBG_01);
 #endif
 		radio_timer_clear_start(CENTRAL_TIMER_SCAN_US);		 
 	}
@@ -589,11 +629,11 @@ static void on_central_end(void)
 
 void radio_start_poll(void)
 {
-	// radio_rtc_start(RADIO_RTC_EVENT_TICKS);
+	radio_grtc_start(RADIO_RTC_EVENT_TICKS);
 
-	RADIO_TIMER->CC[0] = EVENT_US;
-	RADIO_TIMER->TASKS_CLEAR = 1;
-	RADIO_TIMER->TASKS_START = 1;
+	// RADIO_TIMER->CC[0] = EVENT_US;
+	// RADIO_TIMER->TASKS_CLEAR = 1;
+	// RADIO_TIMER->TASKS_START = 1;
 }
 
 #endif
@@ -676,13 +716,13 @@ static void rtc_periph_event_handler(void)
 		{
 			rx_state = RX_SEARCH;
 			is_rx_on = false;				//make sure that the receiver continuously on 
-			radio_rtc_clear_count();
-			radio_rtc_compare0_set(PERIPH_RTC_RX_SEARCH_PERIOD);
+			radio_grtc_clear_count();
+			radio_grtc_compare0_set(PERIPH_RTC_RX_SEARCH_PERIOD);
 		}
 		else
 		{
-			radio_rtc_clear_count();
-			radio_rtc_compare0_set(RADIO_RTC_EVENT_TICKS);
+			radio_grtc_clear_count();
+			radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
 			loss_cnt++;
 			//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
 			nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
@@ -715,7 +755,7 @@ static void rtc_periph_event_handler(void)
    }
    else if (rx_state== RX_SEARCH)
    {
-	   radio_rtc_clear_count();   
+	   radio_grtc_clear_count();   
 	   //For power saving, turn off scan for RX_SEARCH_PERIOD
 		if(is_rx_on)
 		{
@@ -804,7 +844,7 @@ static void rtc_periph_event_handler(void)
 //    }
 //    else if (rx_state== RX_SEARCH)
 //    {
-// 	   radio_rtc_clear_count();   
+// 	   radio_grtc_clear_count();   
 // 	   //For power saving, turn off scan for RX_SEARCH_PERIOD
 // 		if(is_rx_on)
 // 		{
@@ -926,8 +966,8 @@ static void on_periph_disabled(void)
 			// RADIO_TIMER->TASKS_START = 1;
 			//Reload PERIPH_RTC_RX_OPERATE_ADJ_PERIOD to RADIO RTC
 
-			radio_rtc_clear_count();
-			radio_rtc_compare0_set(PERIPH_RTC_RX_OPERATE_ADJ_PERIOD);
+			radio_grtc_clear_count();
+			radio_grtc_compare0_set(PERIPH_RTC_RX_OPERATE_ADJ_PERIOD);
 			//Stop radio timer            
 			radio_timer_stop();
 			/** start transmit packet from message queue */
@@ -955,7 +995,7 @@ void radio_start_receive(void)
 {	
 	 
 	// hf_clock_start();  
-	radio_rtc_start(PERIPH_RTC_RX_SEARCH_PERIOD);  	   
+	radio_grtc_start(PERIPH_RTC_RX_SEARCH_PERIOD);  	   
 	is_rx_on = true;
 	rx_state = RX_SEARCH;
 	m_radio_state =  PERIPH_RX_STATE;
@@ -1038,33 +1078,7 @@ void radio_stop(void)
 	}
 	m_radio_state = IDLE_STATE;
 }
-
-
-/**
- * @brief Handler for radio timer events.
- */
-void radio_rtc_irq_handler(int32_t id, uint64_t expire_time, void *user_data)
-{
-	int err;
-	uint64_t test_ticks = 0;
-
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-	gpio_pin_toggle(dbg_port, PIN_CHANNEL_HOP);
-#endif   
-	if(on_radio_rtc_interrupt)
-		on_radio_rtc_interrupt();
-
-	/** reload grtc compare value */
-	test_ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(delay_ms));
-	// z_nrf_grtc_timer_compare_read(channel, &test_ticks);
-	/** Set compare channel to given value */
-	err = z_nrf_grtc_timer_set(channel, test_ticks, radio_rtc_irq_handler, NULL);
-	if(err)
-	{
-		printk("Failed to set GRTC timer, err=%d\n", err);
-		return;
-	}
-}	
+	
 // /**
 //  * @brief Handler for radio timer events.
 //  */
@@ -1131,29 +1145,7 @@ ISR_DIRECT_DECLARE(RADIO_0_IRQHandler)
 	return 1;
 }
 
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-static void dbg_pins_init(void)
-{
-	int err;
-	
-	if (!device_is_ready(dbg_port)) 
-	{
-		LOG_ERR("Could not bind to debug port");
-	}
-	
-	for (size_t i = 0; i < ARRAY_SIZE(dbg_pins); i++) 
-	{
-		err = gpio_pin_configure(dbg_port, dbg_pins[i], GPIO_OUTPUT);
-		if (err) 
-		{
-			LOG_ERR("Unable to configure radio debug port");
-			dbg_port = NULL;
-		}
-						
-		gpio_pin_set(dbg_port, dbg_pins[i], 0); 
-	}
-}
-#endif
+
 
 
 static void radio_ppi_init(void)
@@ -1218,8 +1210,8 @@ int radio_setup(const radio_init_t *init)
 
 	if (m_is_central) {
 #ifdef CONFIG_MULTIACK_CENTRAL
-		// on_radio_rtc_interrupt = rtc_central_event_handler;
-		on_radio_timer_interrupt = timer_central_event_handler;
+		on_radio_rtc_interrupt = rtc_central_event_handler;
+		// on_radio_timer_interrupt = timer_central_event_handler;
 		on_radio_disabled_interrupt = on_central_disabled;
 #else
 		return -ENOTSUP;
@@ -1300,9 +1292,7 @@ int radio_setup(const radio_init_t *init)
 
 	radio_timer_init();
 
-#ifdef CONFIG_MULTIACK_PERIPH
-	radio_rtc_init();
-#endif
+	radio_grtc_init();
 
 	radio_set_tx_power(RADIO_TX_POWER_4DBM);
 

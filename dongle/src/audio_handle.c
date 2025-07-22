@@ -7,7 +7,7 @@
 
 #include "audio_handle.h"
 #include "esb_handle.h"
-#include "drv_flash.h"
+
 
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
