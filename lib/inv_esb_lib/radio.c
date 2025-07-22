@@ -486,6 +486,11 @@ static void rtc_central_event_handler(void)
 	//Start HF clock for radio and timer
 	hf_clock_start(); 
 
+	if (m_radio_state != IDLE_STATE) {
+		m_radio_state = IDLE_STATE;
+		NRF_RADIO->TASKS_DISABLE = 1;
+	}
+
 	NRF_RADIO->SHORTS       =  RADIO_SHORTS_COMMON;
 
 	NRF_RADIO->INTENSET00     =  RADIO_INTENSET00_DISABLED_Msk; 
@@ -530,12 +535,12 @@ static void on_central_disabled(void)
 				
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
-		gpio_pin_toggle(dbg_port, PIN_DBG_01);
 #endif
-		radio_timer_clear_start(CENTRAL_TIMER_SCAN_US);		 
+		// radio_timer_clear_start(CENTRAL_TIMER_SCAN_US);		 
 	}
 	else if (m_radio_state == CENTRAL_RX_STATE)
 	{
+	#if 0
 		m_radio_state = IDLE_STATE;
 		radio_timer_stop();
 		if( m_subevts >= (NUM_OF_SUBEVTS - 1) )
@@ -559,6 +564,7 @@ static void on_central_disabled(void)
 			m_subevts = (m_subevts +1) % NUM_OF_SUBEVTS;
 			central_send_poll_packet();
 		}
+	#endif
 	}						
 }	
 
