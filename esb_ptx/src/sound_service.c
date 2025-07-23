@@ -66,6 +66,7 @@ static void mic_data_handle(void *, void *, void *)
 
     while(1)
     {
+	#if 1
         int frame_size;
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
         size = read_audio_data(&buffer, READ_TIMEOUT);
@@ -84,6 +85,7 @@ static void mic_data_handle(void *, void *, void *)
 	
             free_audio_memory(buffer);
 		}
+	#endif
     }
 }
 
@@ -108,6 +110,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 				inverse_esb_start();
 				radio_is_up = true;
 				LOG_INF("Radio start");
+				
 			}
 
             LOG_INF("Micphone start to work!");

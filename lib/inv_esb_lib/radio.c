@@ -364,8 +364,6 @@ static void radio_grtc_irq_handler(void)
 #endif   
 		if(on_radio_rtc_interrupt)
 			on_radio_rtc_interrupt();
-
-		// radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
    }
 }	
 
@@ -935,7 +933,7 @@ static void on_periph_disabled(void)
 			RADIO_TIMER->EVENTS_COMPARE[0] =0;
 			//Stops HFCLK;
 			hf_clock_stop();	
-			m_radio_state = IDLE_STATE;			
+			// m_radio_state = IDLE_STATE;			
 			//Disable PPI channel : ppi_ch_timer_compare0_radio_disable 
 			nrfx_gppi_channels_disable(BIT(ppi_ch_timer_compare0_radio_disable));
 			return;	
@@ -944,9 +942,9 @@ static void on_periph_disabled(void)
 		if ((NRF_RADIO->CRCSTATUS & (RADIO_CRCSTATUS_CRCSTATUS_CRCOk << RADIO_CRCSTATUS_CRCSTATUS_Pos)) &&
 		    !dma_buf[0])  // check also it is the poll packet that sent by central but not the other peripherals
 		{
-// #ifdef CONFIG_MULTIACK_DEBUG_GPIO
-// 			gpio_pin_set(dbg_port, PIN_DBG_02, 1);
-// #endif
+#ifdef CONFIG_MULTIACK_DEBUG_GPIO
+			gpio_pin_set(dbg_port, PIN_DBG_01, 1);
+#endif
 			//poll packet received	
 			m_periph_is_poll_rcv = true;
 			rssi = -NRF_RADIO->RSSISAMPLE;
@@ -955,9 +953,9 @@ static void on_periph_disabled(void)
 			peripheral_handle_poll_packet();
 			          
              
-// #ifdef CONFIG_MULTIACK_DEBUG_GPIO
-// 			gpio_pin_set(dbg_port, PIN_DBG_02, 0);
-// #endif
+#ifdef CONFIG_MULTIACK_DEBUG_GPIO
+			gpio_pin_set(dbg_port, PIN_DBG_01, 0);
+#endif
 			// ready to send data back to central
 			if (rx_state == RX_SEARCH)
 			{
@@ -999,9 +997,8 @@ static void on_periph_disabled(void)
 
 void radio_start_receive(void)
 {	
-	 
-	// hf_clock_start();  
-	radio_grtc_start(PERIPH_RTC_RX_SEARCH_PERIOD);  	   
+	radio_grtc_start(PERIPH_RTC_RX_SEARCH_PERIOD); 
+	hf_clock_start();   	   
 	is_rx_on = true;
 	rx_state = RX_SEARCH;
 	m_radio_state =  PERIPH_RX_STATE;
@@ -1293,10 +1290,11 @@ int radio_setup(const radio_init_t *init)
 	// NVIC_SetPriority(TIMER10_IRQn, 1);
 	// NVIC_EnableIRQ(TIMER10_IRQn);
 	// RADIO_TIMER->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-
+#ifdef CONFIG_MULTIACK_PERIPH
 	radio_ppi_init();			// only works for peripheral
 
 	radio_timer_init();
+#endif
 
 	radio_grtc_init();
 

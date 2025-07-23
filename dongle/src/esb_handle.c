@@ -61,10 +61,10 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 				if(0 == (timeCount2++ % 50))
 					leds_toggle(1);
 			} 
-			// LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
+			LOG_INF("Rec %d from %d: %d", p_event->data_len, p_event->periph_num, p_event->data[0]);
 
 			/** enqueue compressed audio data to message queue */
-			received_esb_package_enqueue(p_event->periph_num, (const uint8_t *)p_event->data, p_event->data_len);
+			// received_esb_package_enqueue(p_event->periph_num, (const uint8_t *)p_event->data, p_event->data_len);		//for test
 		}
 		new_pkt_received = true;
 		break;
