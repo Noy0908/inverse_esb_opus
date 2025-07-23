@@ -257,7 +257,7 @@ __INLINE static int hf_clock_start(void)
 		}
 	} while (err);
 
-	LOG_DBG("HF clock started");
+	// LOG_DBG("HF clock started");
 	return 0;
 }
 
@@ -392,6 +392,9 @@ __INLINE static void radio_grtc_init(void)
  */ 
 static void radio_grtc_start(uint32_t delay_ms)
 {
+	NRF_GRTC->CLKCFG = (NRF_GRTC->CLKCFG & ~GRTC_CLKCFG_CLKSEL_Msk) |
+                    (NRF_GRTC_CLKSEL_LFCLK << GRTC_CLKCFG_CLKSEL_Pos);
+
 	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(delay_ms));
     uint32_t cc_h = (uint32_t)(ticks >> 32);
     NRF_GRTC->CC[0].CCL = (uint32_t)ticks;
@@ -479,10 +482,10 @@ static void central_send_poll_packet(void)
 
 static void rtc_central_event_handler(void)
 {
-	radio_grtc_clear_count();
+	// radio_grtc_clear_count();
 
-	//Start HF clock for radio and timer
-	hf_clock_start(); 
+	// //Start HF clock for radio and timer
+	// hf_clock_start(); 
 
 	if (m_radio_state != IDLE_STATE) {
 		m_radio_state = IDLE_STATE;
