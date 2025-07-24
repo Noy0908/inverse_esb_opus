@@ -31,7 +31,7 @@ LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 #define MAX_PERIPH_BIT_ARRAY_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
 #if defined(CONFIG_SOC_SERIES_NRF54HX) || defined(CONFIG_SOC_SERIES_NRF54LX)
-#define RADIO_SHORTS_COMMON (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_PHYEND_DISABLE_Msk)
+#define RADIO_SHORTS_COMMON (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_PHYEND_DISABLE_Msk | RADIO_SHORTS_ADDRESS_RSSISTART_Msk)
 #else
 #define RADIO_SHORTS_COMMON		(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_ADDRESS_RSSISTART_Msk |	RADIO_SHORTS_DISABLED_RSSISTOP_Msk)
 #endif
@@ -265,14 +265,14 @@ __INLINE static int hf_clock_start(void)
 __INLINE static void hf_clock_stop( void )
 {	
 	//Stop HF clock
-    int err;
+    // int err;
 
-	if (!clk_mgr) {
-		return;
-	}
-	err = onoff_cancel_or_release(clk_mgr, &clk_cli);
+	// if (!clk_mgr) {
+	// 	return;
+	// }
+	// err = onoff_cancel_or_release(clk_mgr, &clk_cli);
 
-	clk_mgr = NULL;
+	// clk_mgr = NULL;
 }
 
 
@@ -282,6 +282,7 @@ __INLINE static void radio_timer_init(void)
 	RADIO_TIMER->PRESCALER = 5;
 	RADIO_TIMER->BITMODE   = TIMER_BITMODE_BITMODE_32Bit;
 	RADIO_TIMER->SHORTS    = TIMER_SHORTS_COMPARE0_STOP_Msk;
+	// RADIO_TIMER->SHORTS    = TIMER_SHORTS_COMPARE0_STOP_Msk | TIMER_SHORTS_COMPARE0_CLEAR_Msk;
 }
 
 
@@ -487,10 +488,10 @@ static void rtc_central_event_handler(void)
 	// //Start HF clock for radio and timer
 	// hf_clock_start(); 
 
-	if (m_radio_state != IDLE_STATE) {
-		m_radio_state = IDLE_STATE;
-		NRF_RADIO->TASKS_DISABLE = 1;
-	}
+	// if (m_radio_state != IDLE_STATE) {
+	// 	m_radio_state = IDLE_STATE;
+	// 	NRF_RADIO->TASKS_DISABLE = 1;
+	// }
 
 	NRF_RADIO->SHORTS       =  RADIO_SHORTS_COMMON;
 
@@ -537,11 +538,10 @@ static void on_central_disabled(void)
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
 #endif
-		// radio_timer_clear_start(CENTRAL_TIMER_SCAN_US);		 
+		radio_timer_clear_start(CENTRAL_TIMER_SCAN_US);		 
 	}
 	else if (m_radio_state == CENTRAL_RX_STATE)
 	{
-	#if 0
 		m_radio_state = IDLE_STATE;
 		radio_timer_stop();
 		if( m_subevts >= (NUM_OF_SUBEVTS - 1) )
@@ -565,7 +565,6 @@ static void on_central_disabled(void)
 			m_subevts = (m_subevts +1) % NUM_OF_SUBEVTS;
 			central_send_poll_packet();
 		}
-	#endif
 	}						
 }	
 
@@ -1085,40 +1084,39 @@ void radio_stop(void)
 	m_radio_state = IDLE_STATE;
 }
 	
-// /**
-//  * @brief Handler for radio timer events.
-//  */
-// void radio_timer_irq_handler(void)
-// {
-// 	if (RADIO_TIMER->EVENTS_COMPARE[0] == 1) 	
-// 	{
-// 		RADIO_TIMER->EVENTS_COMPARE[0] = 0; // clear timer compare event
+/**
+ * @brief Handler for radio timer events.
+ */
+void radio_timer_irq_handler(void)
+{
+	if (RADIO_TIMER->EVENTS_COMPARE[0] == 1) 	
+	{
+		RADIO_TIMER->EVENTS_COMPARE[0] = 0; // clear timer compare event
 
-// 	#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-// 		gpio_pin_toggle(dbg_port, PIN_CHANNEL_HOP);
-// 	#endif 
-		
-// 		if (on_radio_timer_interrupt) {
-// 			on_radio_timer_interrupt();
-// 		}
-// 	}
+	#ifdef CONFIG_MULTIACK_CENTRAL
+		NRF_RADIO->TASKS_DISABLE = 1;
+	#endif
+		// if (on_radio_timer_interrupt) {
+		// 	on_radio_timer_interrupt();
+		// }
+	}
 
-// 	// /** maybe peripheral doesn't need this interrupt to send packet to dongle */
-// 	// if (RADIO_TIMER->EVENTS_COMPARE[1] == 1) 
-// 	// {
-// 	// 	RADIO_TIMER->EVENTS_COMPARE[1] = 0; // clear timer compare event
+	// /** maybe peripheral doesn't need this interrupt to send packet to dongle */
+	// if (RADIO_TIMER->EVENTS_COMPARE[1] == 1) 
+	// {
+	// 	RADIO_TIMER->EVENTS_COMPARE[1] = 0; // clear timer compare event
 
-// 	// 	RADIO_TIMER->CC[1] = 0;
+	// 	RADIO_TIMER->CC[1] = 0;
 
-// 	// 	send_packet_from_tx_msgq();
-// 	// }
-// }
+	// 	send_packet_from_tx_msgq();
+	// }
+}
 
-// ISR_DIRECT_DECLARE(TIMER10_IRQHandler)
-// {
-// 	radio_timer_irq_handler();
-// 	return 0;
-// }
+ISR_DIRECT_DECLARE(TIMER10_IRQHandler)
+{
+	radio_timer_irq_handler();
+	return 0;
+}
 
 /**
  * @brief Handler for radio interrupt events.
@@ -1287,17 +1285,16 @@ int radio_setup(const radio_init_t *init)
     NRF_RADIO->PACKETPTR    = (uint32_t)dma_buf;
 
 	// // Radio Timer IRQ settings
-	// IRQ_DIRECT_CONNECT(TIMER10_IRQn, 1, TIMER10_IRQHandler, 0);
-	// irq_enable(TIMER10_IRQn);
-	// NVIC_ClearPendingIRQ(TIMER10_IRQn);
-	// NVIC_SetPriority(TIMER10_IRQn, 1);
-	// NVIC_EnableIRQ(TIMER10_IRQn);
-	// RADIO_TIMER->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
-#ifdef CONFIG_MULTIACK_PERIPH
+	IRQ_DIRECT_CONNECT(TIMER10_IRQn, 1, TIMER10_IRQHandler, 0);
+	irq_enable(TIMER10_IRQn);
+	NVIC_ClearPendingIRQ(TIMER10_IRQn);
+	NVIC_SetPriority(TIMER10_IRQn, 1);
+	NVIC_EnableIRQ(TIMER10_IRQn);
+	RADIO_TIMER->INTENSET = TIMER_INTENSET_COMPARE0_Msk;
+
 	radio_ppi_init();			// only works for peripheral
 
 	radio_timer_init();
-#endif
 
 	radio_grtc_init();
 
