@@ -37,7 +37,7 @@ LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 #endif
 
 #define RADIO_TIMER			NRFX_CONCAT_2(NRF_TIMER,CONFIG_RADIO_TIMER_INSTANCE)
-static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANCE);
+// static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANCE);
 
 #ifdef CONFIG_RADIO_PKT_CNT 
 static uint16_t * m_periph_cnt; 
@@ -78,8 +78,8 @@ static uint8_t poll_packet[] = { 1,  2,  3,  4,  5,  6,  7,  8,
 #endif
 
 
-static uint8_t ppi_ch_timer_compare0_radio_disable;
-static uint8_t ppi_ch_timer_compare0_radio_txen;
+// static uint8_t ppi_ch_timer_compare0_radio_disable;
+// static uint8_t ppi_ch_timer_compare0_radio_txen;
 
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 static const struct device *dbg_port= DEVICE_DT_GET(DT_NODELABEL(gpio0));
@@ -485,12 +485,11 @@ static void rtc_central_event_handler(void)
 	radio_grtc_clear_count();
 
 	// //Start HF clock for radio and timer
-	// hf_clock_start(); 
-
-	// if (m_radio_state != IDLE_STATE) {
-	// 	m_radio_state = IDLE_STATE;
-	// 	NRF_RADIO->TASKS_DISABLE = 1;
-	// }
+	// hf_clock_start();
+	if (m_radio_state != IDLE_STATE) {
+		m_radio_state = IDLE_STATE;
+		NRF_RADIO->TASKS_DISABLE = 1;
+	} 
 
 	NRF_RADIO->SHORTS       =  RADIO_SHORTS_COMMON;
 
@@ -502,21 +501,6 @@ static void rtc_central_event_handler(void)
 
 	radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
 }
-
-// static void timer_central_event_handler(void)
-// {
-// 	if (m_radio_state != IDLE_STATE) {
-// 		m_radio_state = IDLE_STATE;
-// 		NRF_RADIO->TASKS_DISABLE = 1;
-// 	}
-// 	NRF_RADIO->SHORTS = RADIO_SHORTS_COMMON;
-
-// 	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;
-
-// 	radio_hop_channel();
-
-// 	central_send_poll_packet();
-// }
 
 
 static void on_central_disabled(void)
@@ -761,6 +745,7 @@ static void rtc_periph_event_handler(void)
    else if (rx_state== RX_SEARCH)
    {
 	   radio_grtc_clear_count();   
+	   radio_grtc_compare0_set(PERIPH_RTC_RX_SEARCH_PERIOD);
 	   //For power saving, turn off scan for RX_SEARCH_PERIOD
 		if(is_rx_on)
 		{
@@ -999,7 +984,10 @@ void radio_timer_irq_handler(void)
 		RADIO_TIMER->EVENTS_COMPARE[0] = 0; // clear timer compare event
 
 	#ifdef CONFIG_MULTIACK_CENTRAL
-		NRF_RADIO->TASKS_DISABLE = 1;
+		if(m_radio_state == CENTRAL_RX_STATE)
+		{
+			NRF_RADIO->TASKS_DISABLE = 1;	//disable radio for receive timeout
+		}
 	#else
 		timer_periph_event_handler();
 	#endif

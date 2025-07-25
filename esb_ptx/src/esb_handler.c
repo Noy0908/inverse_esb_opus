@@ -7,7 +7,7 @@
 LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 
 
-#define DEV_NUM			2
+#define DEV_NUM			1
 
 
 /***********inv_esb_variables *********************************************************/
@@ -24,6 +24,8 @@ extern int leds_toggle(uint8_t idx);
 
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
+	static uint32_t timeCount = 0;
+
 	switch(p_event->evt_id) {
 	case RADIO_EVENT_PERIPH_POLL_RCV:
 		if (p_event->data_len) {
@@ -36,8 +38,9 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 				inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
 			}
 		}
-		leds_toggle(1);
 
+		if(0 == (timeCount++ % 100))
+			leds_toggle(1);
 
 		break;
 	default:
