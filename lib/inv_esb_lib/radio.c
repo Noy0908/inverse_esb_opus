@@ -825,10 +825,6 @@ int radio_set_dev_num(uint16_t dev_num)
 
 
 
-
-
-
-
 void radio_start_poll(void)
 {
 	radio_rtc_start(RADIO_RTC_EVENT_TICKS);
