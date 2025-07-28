@@ -36,7 +36,7 @@ LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 #define RADIO_SHORTS_COMMON		(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_ADDRESS_RSSISTART_Msk |	RADIO_SHORTS_DISABLED_RSSISTOP_Msk)
 #endif
 
-#define RADIO_TIMER			NRFX_CONCAT_2(NRF_TIMER,CONFIG_RADIO_TIMER_INSTANCE)
+// #define RADIO_TIMER			NRFX_CONCAT_2(NRF_TIMER,CONFIG_RADIO_TIMER_INSTANCE)
 // static nrfx_timer_t radio_timer = NRFX_TIMER_INSTANCE(CONFIG_RADIO_TIMER_INSTANCE);
 
 #ifdef CONFIG_RADIO_PKT_CNT 
@@ -278,32 +278,32 @@ __INLINE static void hf_clock_stop( void )
 }
 
 
-__INLINE static void radio_timer_init(void)
-{
-   // Configure the radio timer with a 1 MHz base frequency
-	RADIO_TIMER->PRESCALER = 5;
-	RADIO_TIMER->BITMODE   = TIMER_BITMODE_BITMODE_32Bit;
-	RADIO_TIMER->SHORTS    = TIMER_SHORTS_COMPARE0_STOP_Msk;
-}
+// __INLINE static void radio_timer_init(void)
+// {
+//    // Configure the radio timer with a 1 MHz base frequency
+// 	RADIO_TIMER->PRESCALER = 5;
+// 	RADIO_TIMER->BITMODE   = TIMER_BITMODE_BITMODE_32Bit;
+// 	RADIO_TIMER->SHORTS    = TIMER_SHORTS_COMPARE0_STOP_Msk;
+// }
 
 
-/**@brief Function for starting the radio timer.
- */ 
-__INLINE static void radio_timer_clear_start(uint32_t ticks)
-{
-    RADIO_TIMER->TASKS_CLEAR = 1;
-    RADIO_TIMER->CC[0] = ticks;
-	RADIO_TIMER->TASKS_START = 1;
-}
+// /**@brief Function for starting the radio timer.
+//  */ 
+// __INLINE static void radio_timer_clear_start(uint32_t ticks)
+// {
+//     RADIO_TIMER->TASKS_CLEAR = 1;
+//     RADIO_TIMER->CC[0] = ticks;
+// 	RADIO_TIMER->TASKS_START = 1;
+// }
 
 
 
-/**@brief Function for stop the radio timer.
- */ 
-__INLINE static void radio_timer_stop(void)
-{
-	RADIO_TIMER->TASKS_STOP=1;
-}
+// /**@brief Function for stop the radio timer.
+//  */ 
+// __INLINE static void radio_timer_stop(void)
+// {
+// 	RADIO_TIMER->TASKS_STOP=1;
+// }
 
 
 
@@ -648,10 +648,6 @@ static void on_central_end(void)
 void radio_start_poll(void)
 {
 	radio_grtc_compare0_start(RADIO_RTC_EVENT_TICKS);
-
-	// RADIO_TIMER->CC[0] = EVENT_US;
-	// RADIO_TIMER->TASKS_CLEAR = 1;
-	// RADIO_TIMER->TASKS_START = 1;
 }
 
 #endif
@@ -767,7 +763,7 @@ static void rtc_periph_event_handler(void)
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
 #endif
 		
-		RADIO_TIMER->EVENTS_COMPARE[0]=0;
+		// RADIO_TIMER->EVENTS_COMPARE[0]=0;
 		//Start radio timer
 		// radio_timer_clear_start(PERIPH_TIMER_SCAN_US);
 		radio_grtc_compare1_start(PERIPH_TIMER_SCAN_US);
@@ -895,8 +891,7 @@ static void on_periph_disabled(void)
 			loss_cnt = 0;   
 			// LOG_INF("Poll packet received, RSSI: %d", rssi);
 			peripheral_handle_poll_packet();
-			          
-             
+			                   
 #ifdef CONFIG_MULTIACK_DEBUG_GPIO
 			gpio_pin_set(dbg_port, PIN_DBG_01, 0);
 #endif
@@ -939,7 +934,7 @@ void radio_start_receive(void)
 	rx_state = RX_SEARCH;
 	m_radio_state =  PERIPH_RX_STATE;
 
-	RADIO_TIMER->EVENTS_COMPARE[0] = 0;
+	// RADIO_TIMER->EVENTS_COMPARE[0] = 0;
 	NRF_RADIO->EVENTS_DISABLED = 0;
 	NRF_RADIO->SHORTS = RADIO_SHORTS_COMMON;
 	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;
