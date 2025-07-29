@@ -31,7 +31,7 @@ LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 #define MAX_PERIPH_BIT_ARRAY_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
 #if defined(CONFIG_SOC_SERIES_NRF54HX) || defined(CONFIG_SOC_SERIES_NRF54LX)
-#define RADIO_SHORTS_COMMON (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_PHYEND_DISABLE_Msk | RADIO_SHORTS_ADDRESS_RSSISTART_Msk)
+#define RADIO_SHORTS_COMMON (RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_PHYEND_DISABLE_Msk)
 #else
 #define RADIO_SHORTS_COMMON		(RADIO_SHORTS_READY_START_Msk | RADIO_SHORTS_END_DISABLE_Msk | RADIO_SHORTS_ADDRESS_RSSISTART_Msk |	RADIO_SHORTS_DISABLED_RSSISTOP_Msk)
 #endif
@@ -341,7 +341,7 @@ static void dbg_pins_init(void)
 __INLINE static void radio_grtc_compare0_set(uint32_t value)
 {
 	// RADIO_RTC->CC[0] = value;
-	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(value));
+	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_USEC(value));
     uint32_t cc_h = (uint32_t)(ticks >> 32);
     NRF_GRTC->CC[0].CCL = (uint32_t)ticks;
     NRF_GRTC->CC[0].CCH = cc_h & NRF_GRTC_SYSCOUNTER_CCH_MASK;
@@ -406,17 +406,17 @@ __INLINE static void radio_grtc_init(void)
 
 /**@brief Function for starting radio RTC.
  */ 
-static void radio_grtc_compare0_start(uint32_t delay_ms)
+static void radio_grtc_compare0_start(uint32_t delay_us)
 {
 	NRF_GRTC->CLKCFG = (NRF_GRTC->CLKCFG & ~GRTC_CLKCFG_CLKSEL_Msk) |
                     (NRF_GRTC_CLKSEL_LFCLK << GRTC_CLKCFG_CLKSEL_Pos);
 
-	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_MSEC(delay_ms));
+	uint64_t ticks = z_nrf_grtc_timer_get_ticks(K_USEC(delay_us));
     uint32_t cc_h = (uint32_t)(ticks >> 32);
     NRF_GRTC->CC[0].CCL = (uint32_t)ticks;
     NRF_GRTC->CC[0].CCH = cc_h & NRF_GRTC_SYSCOUNTER_CCH_MASK;
 	// NRF_GRTC->INTERVAL = delay_ms * 1000; // Set the interval in microseconds. Period value in 1 MHz units.
-	NRF_GRTC->GRTC_INTENSET     = GRTC_INTENSET0_COMPARE0_Msk;
+	NRF_GRTC->GRTC_INTENSET |= GRTC_INTENSET0_COMPARE0_Msk;
 	NRF_GRTC->TASKS_CLEAR	=1;
 	NRF_GRTC->TASKS_START	=1;
 }
@@ -678,9 +678,9 @@ static void inv_esb_start_tx(const struct inv_esb_payload *payload)
 	// radio_timer_clear_start(PERIPH_TIMER_TX_DELAY_PERIOD * m_dev_num);
 	radio_grtc_compare1_start(PERIPH_TIMER_TX_DELAY_PERIOD * m_dev_num);
 	
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
-#endif
+// #ifdef CONFIG_MULTIACK_DEBUG_GPIO
+// 	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
+// #endif
 }
 
 
@@ -725,6 +725,11 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 
 static void rtc_periph_event_handler(void)
 {	
+	if (m_radio_state != IDLE_STATE) {
+		m_radio_state = IDLE_STATE;
+		NRF_RADIO->TASKS_DISABLE = 1;
+	} 
+
 	if (rx_state== RX_OPERATE)
 	{
 		if ( loss_cnt == sizeof(RF_CHANNEL_TAB))
@@ -742,18 +747,6 @@ static void rtc_periph_event_handler(void)
 			//Enable PPI channel : ppi_ch_timer_compare0_radio_disable 
 			// nrfx_gppi_channels_enable(BIT(ppi_ch_timer_compare0_radio_disable));
 		}  
-						
-		if(m_periph_is_poll_rcv)
-		{	
-			m_periph_is_poll_rcv = false;	
-		}
-		else
-		{
-			radio_evt_t	m_radio_event;
-			m_radio_event.evt_id = RADIO_EVENT_PERIPH_POLL_NOT_RCV;
-			m_radio_event.chan_cnt = m_rf_chan_idx;
-			m_event_callback(&m_radio_event);
-		}
 		
 		// hf_clock_start();
 		radio_hop_channel();
@@ -810,6 +803,9 @@ static void timer_periph_event_handler(void)
 	if(m_radio_state == PERIPH_TX_STATE)
 	{
 		NRF_RADIO->TASKS_TXEN = 1;
+	#ifdef CONFIG_MULTIACK_DEBUG_GPIO
+		gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
+	#endif
 	}
 	else if (m_radio_state == PERIPH_RX_STATE) 
 	{
@@ -902,7 +898,7 @@ static void on_periph_disabled(void)
 			}
 
 			//Reload PERIPH_RTC_RX_OPERATE_ADJ_PERIOD to RADIO RTC
-			radio_grtc_clear_count();
+			// radio_grtc_clear_count();
 			radio_grtc_compare0_set(PERIPH_RTC_RX_OPERATE_ADJ_PERIOD);
 			//Stop radio timer            
 			// radio_timer_stop();
