@@ -141,18 +141,6 @@ static void handle_audio_data(const struct device *dev)
 			// LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
 		}
 	} 
-	// if (data_out_size == FLASH_PAGE_SIZE) 
-    // {
-	// 	ret = soc_flash_write(total_size, buf_out->data, data_out_size);
-	// 	if (ret) {
-	// 		LOG_WRN("write flash failed, ret: %d", ret);
-	// 		net_buf_unref(buf_out);
-	// 	}
-	// 	// else
-	// 	// {	
-	// 	// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-	// 	// }
-	// } 
     else 
 #endif
     {
@@ -213,9 +201,10 @@ void esb_buffer_handle(void)
 								CONFIG_AUDIO_FRAME_SIZE_BYTES, 
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
-																			
-		LOG_INF("%d--%d", devID, frame_size);
-	#if 0		
+
+		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)																	
+			LOG_INF("%d--%d", rx_payload.length, frame_size);
+	#if 1		
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
