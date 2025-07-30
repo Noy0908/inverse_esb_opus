@@ -9,7 +9,7 @@
 
 LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
-#define SOUND_STACK_SIZE        15360
+#define SOUND_STACK_SIZE        20480
 #define SOUND_PRIORITY          5
 
 /* Milliseconds to wait for a block to be read. */
@@ -79,7 +79,8 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			LOG_INF("%d", frame_size);
+			// if(frame_size != 20)
+				LOG_INF("%d--%d", size, frame_size);
 
 			inv_esb_package_enqueue(frame_buf, frame_size);
 	

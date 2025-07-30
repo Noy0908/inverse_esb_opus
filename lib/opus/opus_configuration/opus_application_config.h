@@ -60,7 +60,7 @@
 //      Bit 0:  0 = VBR/CVBR
 //              1 = CBR
 //
-#define CONFIG_OPUS_BITRATE_CFG 32000
+#define CONFIG_OPUS_BITRATE_CFG 32001
 
 // <o> Bit Rate Limit
 // <i> Set a bit rate limit that cannot be exceeded during the transmission. Must be equal or higher than the configured bit rate.
