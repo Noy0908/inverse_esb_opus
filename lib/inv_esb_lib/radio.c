@@ -667,7 +667,7 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 	tx_payload.length = length;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
 	if (ret)  {
-		// LOG_INF("Audio message queue is full");
+		LOG_INF("Audio message queue is full");
 		return -ENOMEM;
 	}
 	return ret;

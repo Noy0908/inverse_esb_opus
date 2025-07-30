@@ -150,7 +150,7 @@ int main(void)
 		LOG_ERR("Cannot init buttons (err: %d)\n", err);
 	}
 
-	// drv_audio_init();
+	drv_audio_init();
 
 	err = app_event_manager_init();
 	if (err) {

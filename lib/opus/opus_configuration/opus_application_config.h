@@ -60,7 +60,7 @@
 //      Bit 0:  0 = VBR/CVBR
 //              1 = CBR
 //
-#define CONFIG_OPUS_BITRATE_CFG 16001
+#define CONFIG_OPUS_BITRATE_CFG 32000
 
 // <o> Bit Rate Limit
 // <i> Set a bit rate limit that cannot be exceeded during the transmission. Must be equal or higher than the configured bit rate.
@@ -81,7 +81,7 @@
 //  <144000=>144 kbit/s
 //  <160000=>160 kbit/s
 //  <256000=>256 kbit/s
-#define CONFIG_OPUS_BITRATE_LIMIT 16000
+#define CONFIG_OPUS_BITRATE_LIMIT 32000
 
 // <o> Complexity <0-10>
 // <i> A number from range 0-10. Higher complexity assures better quality but also higher CPU and memory resources consumption.
