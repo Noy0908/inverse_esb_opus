@@ -85,7 +85,7 @@
 
 // <o> Complexity <0-10>
 // <i> A number from range 0-10. Higher complexity assures better quality but also higher CPU and memory resources consumption.
-#define CONFIG_OPUS_COMPLEXITY 2
+#define CONFIG_OPUS_COMPLEXITY 4
 
 // <o> Audio Frame Size
 // <i> CELT supports 5 ms - 40 ms audio frames. SILK provides support for 10 ms - 60 ms frame sizes.
@@ -94,7 +94,7 @@
 //  <20=>20 ms
 //  <40=>40 ms
 //  <60=>60 ms
-#define CONFIG_AUDIO_FRAME_SIZE_MS 5
+#define CONFIG_AUDIO_FRAME_SIZE_MS 10
 
 // <q> Include frame header
 // <i> Note: Host-side NVS implementation requires frame header for reassembly. Disabling this option breaks NVS host compatibility.

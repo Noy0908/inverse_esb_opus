@@ -99,26 +99,26 @@ static void handle_audio_data(const struct device *dev)
 	if(channel1_flag && channel2_flag)
 	{
 		LOG_INF("1 & 2\n");
-		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
-		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else if(channel1_flag)
 	{
 		// LOG_INF("1\n");
-		// pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer1, sizeof(frame_buffer1), (int16_t*) frame_buffer1, sizeof(frame_buffer1), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer1, (int16_t*) frame_buffer1, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else if(channel2_flag)
 	{
-		// LOG_INF("2\n");
+		LOG_INF("2\n");
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
 	{
-		// LOG_ERR("Both audio buffers are NULL");
+		LOG_ERR("Both audio buffers are NULL");
 		net_buf_unref(buf_out);
 		return;
 	}
@@ -186,6 +186,8 @@ void esb_buffer_handle(void)
     int err = 0;
     struct inv_esb_payload rx_payload;
 	int16_t block_ptr[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
+	// 1ms buffer
+    int16_t slice_buf[FRAME_SIZE];
 
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
@@ -202,22 +204,26 @@ void esb_buffer_handle(void)
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 
-		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)																	
+		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)	
+		{															
 			LOG_INF("%d--%d", rx_payload.length, frame_size);
-	#if 1		
+			return;
+		}
+	
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
 			while(pcm_index + FRAME_SIZE <= frame_size )
 			{
-				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
+				memcpy(slice_buf, &block_ptr[pcm_index], FRAME_SIZE * sizeof(int16_t));
+				err = k_msgq_put(&esb_queue1, slice_buf, K_FOREVER);
 				if(!err)
 				{
 					pcm_index += FRAME_SIZE;
 				}
 				else
 				{
-					// LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					LOG_ERR("1[%d] Message sent error: %d", pcm_index, err);
 					break;
 				}
 			}
@@ -234,7 +240,7 @@ void esb_buffer_handle(void)
 				}
 				else
 				{
-					// LOG_ERR("[%d] Message sent error: %d", pcm_index, err);
+					LOG_ERR("2[%d] Message sent error: %d", pcm_index, err);
 					break;
 				}
 			}
@@ -244,11 +250,6 @@ void esb_buffer_handle(void)
 		{
 			err = -EINVAL;
 		}
-				
-		// if (err) {
-		// 	LOG_ERR("Message sent error: %d", err);
-		// }
-	#endif
     } 
     else 
     {

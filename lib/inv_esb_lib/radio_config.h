@@ -52,10 +52,10 @@
 #define RF_CHAN_TAB_SIZE			               8
 
 
-#define RADIO_RTC_EVENT_TICKS		               3   // 2ms, 0.5ms per tick
+#define RADIO_RTC_EVENT_TICKS		               4   // 2ms, 0.5ms per tick
 			
 
-#define CENTRAL_TIMER_SCAN_US		               1100 //1.5ms, 1 us per tick		
+#define CENTRAL_TIMER_SCAN_US		               1500 //1.5ms, 1 us per tick		
 #define PERIPH_TIMER_SCAN_US		               3000 //2ms, 1 us per tick			
 
 #define RTC_ADJ						               1
@@ -67,7 +67,7 @@
 
 
 /** timeslot for one peripheral */
-#define PERIPH_TIMER_TX_DELAY_PERIOD		      350  //us
+#define PERIPH_TIMER_TX_DELAY_PERIOD		      400  //us
 
 #define CENTRAL_PKT_SIZE			               2
 
