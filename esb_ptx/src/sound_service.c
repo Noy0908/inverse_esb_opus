@@ -9,7 +9,7 @@
 
 LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
-#define SOUND_STACK_SIZE        15360
+#define SOUND_STACK_SIZE        20480
 #define SOUND_PRIORITY          5
 
 /* Milliseconds to wait for a block to be read. */
@@ -66,6 +66,7 @@ static void mic_data_handle(void *, void *, void *)
 
     while(1)
     {
+	#if 1
         int frame_size;
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
         size = read_audio_data(&buffer, READ_TIMEOUT);
@@ -78,12 +79,14 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			LOG_INF("%d", frame_size);
+			// if(frame_size != 20)
+				LOG_INF("%d--%d", size, frame_size);
 
 			inv_esb_package_enqueue(frame_buf, frame_size);
 	
             free_audio_memory(buffer);
 		}
+	#endif
     }
 }
 
@@ -111,18 +114,18 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			}
 
             LOG_INF("Micphone start to work!");
-			// drv_mic_start();
+			drv_mic_start();
 
-			// k_thread_resume(sound_service);
+			k_thread_resume(sound_service);
 			
 			turn_on_off_led(0, true);
 		}
 		else if(event->type == MIC_STATUS_STOP)
 		{
             LOG_INF("Micphone stop to work!");
-			// drv_mic_stop();
+			drv_mic_stop();
 
-			// k_thread_suspend(sound_service);
+			k_thread_suspend(sound_service);
 
             turn_on_off_led(0, false);
 			/** radio work longer to  send the rest audio frame */

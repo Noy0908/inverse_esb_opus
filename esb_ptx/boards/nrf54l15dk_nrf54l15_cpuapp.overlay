@@ -13,3 +13,21 @@ dmic_dev: &pdm20 {
 	pinctrl-names = "default";
 	clock-source = "PCLK32M";
 };
+
+&cpuapp_sram {
+	reg = <0x20000000 DT_SIZE_K(250)>;
+	ranges = <0x0 0x20000000 DT_SIZE_K(250)>;
+};
+
+/{
+	soc {
+		/delete-node/ cpuflpr_sram;
+	};
+	
+};
+
+
+&button0 {
+	gpios = < &gpio1 0xb 0x11 >;
+	status = "okay";
+};

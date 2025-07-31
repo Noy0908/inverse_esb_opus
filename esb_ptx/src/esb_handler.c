@@ -14,11 +14,20 @@ LOG_MODULE_REGISTER(esb_handler, LOG_LEVEL_INF);
 static uint8_t radio_dev_num = DEV_NUM;
 static uint8_t radio_group;
 
+#if 0
+static uint8_t tx_packet[] = { 0, '1', '2', '3', '4', '5', '6','7', \
+				'a', 'b', 'c', 'd', 'e', 'f', 'g','h', \
+				'0', '1', '2', '3', '4', '5', '6','7', \
+				'a', 'b', 'c', 'd', 'e', 'f', 'g','h', };
+
+#endif
 
 extern int leds_toggle(uint8_t idx);
 
 static void radio_evt_cb(radio_evt_t const * p_event)
 {
+	static uint32_t timeCount = 0;
+
 	switch(p_event->evt_id) {
 	case RADIO_EVENT_PERIPH_POLL_RCV:
 		if (p_event->data_len) {
@@ -26,9 +35,15 @@ static void radio_evt_cb(radio_evt_t const * p_event)
 			if(last_send_flag)
 			{
 				delete_tx_item_from_queue();
+				/** below code just for test */
+				// tx_packet[0]++;
+				// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));
 			}
 		}
-		leds_toggle(1);
+
+		if(0 == (timeCount++ % 100))
+			leds_toggle(1);
+
 		break;
 	default:
 		break;
@@ -54,6 +69,8 @@ int inverse_esb_start(void)
 	} else {
 		LOG_ERR("Setting radio failed (err %d)", err);
 	}
+
+	// inv_esb_package_enqueue(tx_packet, sizeof(tx_packet));			//for test
 
 	return err;
 }
