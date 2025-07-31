@@ -94,7 +94,7 @@
 //  <20=>20 ms
 //  <40=>40 ms
 //  <60=>60 ms
-#define CONFIG_AUDIO_FRAME_SIZE_MS 5
+#define CONFIG_AUDIO_FRAME_SIZE_MS 10
 
 // <q> Include frame header
 // <i> Note: Host-side NVS implementation requires frame header for reassembly. Disabling this option breaks NVS host compatibility.

@@ -304,7 +304,6 @@ static void grtc_interrupt_handler(int32_t id, uint64_t expire_time, void *user_
 {
 	if(id == channel1)
 	{
-		
 	#ifdef CONFIG_MULTIACK_DEBUG_GPIO
 		gpio_pin_toggle(dbg_port, PIN_CHANNEL_HOP);
 	#endif   
@@ -693,7 +692,7 @@ static void rtc_periph_event_handler(void)
 		else
 		{
 			radio_grtc_clear_count();
-			radio_grtc_compare0_set(RADIO_RTC_EVENT_TICKS);
+			radio_grtc_compare0_set(PERIPH_RTC_RX_OPERATE_PERIOD);
 			loss_cnt++;
 		}  
 		
@@ -705,7 +704,7 @@ static void rtc_periph_event_handler(void)
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
 #endif
 		
-		radio_grtc_compare1_set(PERIPH_TIMER_SCAN_US);
+		// radio_grtc_compare1_set(PERIPH_TIMER_SCAN_US);
 		m_radio_state = PERIPH_RX_STATE;				
    }
    else if (rx_state== RX_SEARCH)
@@ -864,13 +863,6 @@ void radio_start_receive(void)
 	NRF_RADIO->INTENSET00 = RADIO_INTENSET00_DISABLED_Msk;
 	NRF_RADIO->TASKS_RXEN = 1;
 
-#ifdef CONFIG_MULTIACK_DEBUG_GPIO
-	gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
-
-	gpio_pin_set(dbg_port, PIN_CHANNEL_HOP, 1);
-	gpio_pin_set(dbg_port, PIN_DATA_TX, 1);
-	gpio_pin_set(dbg_port, PIN_DBG_01, 1);
-#endif
 }
 
 

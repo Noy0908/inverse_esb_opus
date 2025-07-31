@@ -12,10 +12,9 @@
 
 #define MAX_PERIPHS		2
 
-#define MAX_CHANNEL_TAB		16
 
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	20
+#define MAX_PAYLOAD_SIZE	40
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 

@@ -9,7 +9,7 @@
 
 /* Size of a block for 1 ms of audio data. */
 #define BLOCK_SIZE(_sample_rate, _number_of_channels) \
-	(BYTES_PER_SAMPLE * (_sample_rate / 200) * _number_of_channels)
+	(BYTES_PER_SAMPLE * (_sample_rate / 100) * _number_of_channels)
 
 #define MAX_BLOCK_SIZE      BLOCK_SIZE(MAX_SAMPLE_RATE, 1)
 
