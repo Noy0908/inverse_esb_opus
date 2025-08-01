@@ -572,7 +572,7 @@ void delete_tx_item_from_queue(void)
 }
 
 
-int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
+int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length)
 {
 	int ret = 0;
 	static struct inv_esb_payload tx_payload;
@@ -580,8 +580,15 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 		LOG_ERR("Payload length %d exceeds maximum %d", length, MAX_PAYLOAD_SIZE);
 		return -EMSGSIZE;
 	}
-	memcpy(tx_payload.data, buf, length);
-	tx_payload.length = length;
+
+	
+	tx_payload.data[0] = idx & 0xFF;  // Set the first byte as the index
+	tx_payload.data[1] = (idx >> 8) & 0xFF; // Set the second byte as the index high byte
+	tx_payload.data[2] = (idx >> 16) & 0xFF; // Set the third byte as the index high byte
+	tx_payload.data[3] = (idx >> 24) & 0xFF; // Set the fourth byte as the index high byte
+
+	memcpy(&tx_payload.data[4], buf, length);
+	tx_payload.length = length + 4;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
 	if (ret)  {
 		// LOG_INF("Audio message queue is full");

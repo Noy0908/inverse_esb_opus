@@ -26,7 +26,7 @@ static uint8_t m_opus_complexity = CONFIG_OPUS_COMPLEXITY;
 static int32_t m_opus_bitrate    = ((CONFIG_OPUS_BITRATE != 0) ? CONFIG_OPUS_BITRATE : OPUS_AUTO);
 static bool m_opus_vbr        = ((CONFIG_OPUS_BITRATE == 0) || (CONFIG_OPUS_VBR_ENABLED != 0));
 static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
-
+static uint32_t packID = 0;
 
 static void opus_encoder_configure(void)
 {
@@ -69,7 +69,7 @@ static void mic_data_handle(void *, void *, void *)
         int frame_size;
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
         size = read_audio_data(&buffer, READ_TIMEOUT);
-        if(size)
+        if(size == CONFIG_AUDIO_FRAME_SIZE_SAMPLES * BYTES_PER_SAMPLE)
         {	
 			frame_size = opus_encode(
 									m_opus_encoder_state,
@@ -78,9 +78,14 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			LOG_INF("%d", frame_size);
+			if(frame_size != CONFIG_AUDIO_FRAME_SIZE_BYTES)
+			{
+				LOG_ERR("%d", frame_size);
+				return;
+			}
 
-			inv_esb_package_enqueue(frame_buf, frame_size);
+			inv_esb_package_enqueue(packID, frame_buf, frame_size);
+			packID++;
 	
             free_audio_memory(buffer);
 		}
@@ -111,6 +116,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			}
 
             LOG_INF("Micphone start to work!");
+			packID = 0;
 			drv_mic_start();
 
 			k_thread_resume(sound_service);

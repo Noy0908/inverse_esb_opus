@@ -118,7 +118,7 @@ static void handle_audio_data(const struct device *dev)
 	}
 	else
 	{
-		LOG_ERR("Both audio buffers are NULL");
+		// LOG_ERR("Both audio buffers are NULL");
 		net_buf_unref(buf_out);
 		return;
 	}
@@ -194,19 +194,22 @@ void esb_buffer_handle(void)
 		uint8_t pcm_index = 0;
 		int frame_size = 0;
 		uint8_t devID = rx_payload.dev_id;
+		uint32_t packet_id = rx_payload.data[0] | (rx_payload.data[1] << 8) | (rx_payload.data[2] << 16) | (rx_payload.data[3] << 24);
 
         // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
 		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 
 		frame_size = opus_decode(m_opus_decoder_state, 
-								rx_payload.data, 
+								&rx_payload.data[4], 
 								CONFIG_AUDIO_FRAME_SIZE_BYTES, 
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 
+		LOG_INF("%d--%d", packet_id, frame_size);
 		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)	
 		{															
-			LOG_INF("%d--%d", rx_payload.length, frame_size);
+			// LOG_INF("%d--%d: 0x%02x, 0x%02x, 0x%02x, 0x%02x", rx_payload.length, frame_size, rx_payload.data[0],rx_payload.data[1],
+			// 		rx_payload.data[MAX_PAYLOAD_SIZE-2],rx_payload.data[MAX_PAYLOAD_SIZE-1]);
 			return;
 		}
 	
