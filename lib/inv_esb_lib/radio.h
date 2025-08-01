@@ -14,7 +14,7 @@
 
 
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	40
+#define MAX_PAYLOAD_SIZE	(40 + 4) // 40 bytes payload + 4 byte packet index
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
@@ -105,6 +105,7 @@ struct inv_esb_payload {
     uint8_t dev_id; /**< Device ID, used to identify the device that sent the packet. */
 	uint8_t length; /**< Length of the packet when not in DPL mode. */
 	uint8_t data[MAX_PAYLOAD_SIZE]; /**< The payload data and devID. */
+    // uint32_t index; /**< Packet index, used to identify the packet. */
 };
 
 typedef void (*event_callback_t ) (radio_evt_t const * p_event);
@@ -137,7 +138,7 @@ void increase_poll_index(void);
 
 int pull_packet_from_tx_msgq(void);
 
-int inv_esb_package_enqueue(uint8_t *buf, uint32_t length);
+int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length);
 
 void delete_tx_item_from_queue(void);
 

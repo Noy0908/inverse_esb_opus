@@ -26,7 +26,7 @@ static uint8_t m_opus_complexity = CONFIG_OPUS_COMPLEXITY;
 static int32_t m_opus_bitrate    = ((CONFIG_OPUS_BITRATE != 0) ? CONFIG_OPUS_BITRATE : OPUS_AUTO);
 static bool m_opus_vbr        = ((CONFIG_OPUS_BITRATE == 0) || (CONFIG_OPUS_VBR_ENABLED != 0));
 static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
-
+static uint32_t packID = 0;
 
 static void opus_encoder_configure(void)
 {
@@ -47,20 +47,6 @@ static void opus_encoder_configure(void)
 	__ASSERT_NO_MSG(opus_encoder_ctl(m_opus_encoder_state, OPUS_SET_PACKET_LOSS_PERC(0))                          == OPUS_OK);
 }
 
-/*********************************opus decoder*********************************************/
-/******************************** opus decoder variables ******************************************/
-#define OPUS_DECODER_SIZE   			9224
-__ALIGN(4) static uint8_t m_opus_decoder[OPUS_DECODER_SIZE];
-static OpusDecoder * const m_opus_decoder_state = (OpusDecoder *)m_opus_decoder;
-
-
-static void opus_decoder_configure(void)
-{
-        printk("opus_decoder_get_size() = %d\n", opus_decoder_get_size(m_opus_channels));        
-        __ASSERT_NO_MSG(opus_decoder_get_size(m_opus_channels) <= sizeof(m_opus_decoder));
-        __ASSERT_NO_MSG(opus_decoder_init(m_opus_decoder_state, CONFIG_AUDIO_SAMPLING_FREQUENCY, m_opus_channels) == OPUS_OK);
-}
-
 
 static bool radio_is_up;
 
@@ -72,8 +58,6 @@ static void mic_data_handle(void *, void *, void *)
 
 	opus_encoder_configure();
 
-	opus_decoder_configure();	//test
-
     LOG_INF("Sound service start, wait for PCM data......");
 
 	/** suspend the thread until we received a start event*/
@@ -83,13 +67,10 @@ static void mic_data_handle(void *, void *, void *)
     {
 	#if 1
         int frame_size;
-		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES];
-		/***** test *********************/
-		int decompressed_frame_size;
-		int16_t frame_buf_uncompressed[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
-		/****************************** */
+		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES] = {0};
+
         size = read_audio_data(&buffer, READ_TIMEOUT);
-        if(size)
+        if(size == CONFIG_AUDIO_FRAME_SIZE_SAMPLES * BYTES_PER_SAMPLE)
         {	
 			frame_size = opus_encode(
 									m_opus_encoder_state,
@@ -98,21 +79,23 @@ static void mic_data_handle(void *, void *, void *)
 									frame_buf,
 									CONFIG_AUDIO_FRAME_SIZE_BYTES
 									);
-			// if(frame_size != CONFIG_AUDIO_FRAME_SIZE_BYTES)
-			// 	LOG_INF("%d", frame_size);
-			LOG_INF("Packet send[%d], 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", frame_size,			
-				 frame_buf[0],frame_buf[1], frame_buf[2],frame_buf[3]);							
-			
-			// decompressed_frame_size =  opus_decode(m_opus_decoder_state, 
-            //                             frame_buf, 
-            //                             frame_size, 
-            //                             frame_buf_uncompressed, 
-            //                             CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
-			// LOG_INF("%d", decompressed_frame_size);
+			if(frame_size != CONFIG_AUDIO_FRAME_SIZE_BYTES)
+			{
+				LOG_ERR("%d", frame_size);
+				return;
+			}
+				
+			// LOG_INF("Packet send[%d-%d], 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", size,frame_size,			
+			// 	 frame_buf[0],frame_buf[1], frame_buf[2],frame_buf[3]);		
 
-			inv_esb_package_enqueue(frame_buf, frame_size);
+			inv_esb_package_enqueue(packID, frame_buf, frame_size);
+			packID++;
 	
             free_audio_memory(buffer);
+		}
+		else{
+			LOG_ERR("Read audio data failed, size = %d", size);
+			free_audio_memory(buffer);
 		}
 	#endif
     }
@@ -142,6 +125,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			}
 
             LOG_INF("Micphone start to work!");
+			packID = 0;
 			drv_mic_start();
 
 			k_thread_resume(sound_service);

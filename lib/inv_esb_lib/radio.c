@@ -13,16 +13,16 @@
 #include "radio_config.h"
 
 #include <hal/nrf_radio.h>
-#include <hal/nrf_timer.h>
+// #include <hal/nrf_timer.h>
 #include <hal/nrf_grtc.h>
-#include <helpers/nrfx_gppi.h>
+// #include <helpers/nrfx_gppi.h>
 
-#if defined(DPPI_PRESENT)
-#include <nrfx_dppi.h>
-#else
-#include <nrfx_ppi.h>
-#endif
-#include <nrfx_timer.h>
+// #if defined(DPPI_PRESENT)
+// #include <nrfx_dppi.h>
+// #else
+// #include <nrfx_ppi.h>
+// #endif
+// #include <nrfx_timer.h>
 
 LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 
@@ -50,7 +50,7 @@ static uint8_t m_rf_chan_idx=0;
 /* Byte 0 being S0 field, Byte 1 being length field, Byte 2 being S1 field,
  * rest of them contains the payload
  */
-static uint8_t dma_buf[3 + MAX_PACKET_LENGTH];
+static uint8_t dma_buf[3 + MAX_PACKET_LENGTH + 1];
 static volatile int8_t rssi = 0;
 static volatile bool crc_ok = false;
 static bool m_is_central;
@@ -619,7 +619,7 @@ void radio_start_poll(void)
 static void inv_esb_start_tx(const struct inv_esb_payload *payload)
 {
 	//Set dma_buf to data
-	if (payload->length <= MAX_PACKET_LENGTH) {
+	if (payload->length <= MAX_PACKET_LENGTH + 1) {
 		memcpy(&dma_buf[3], payload->data, payload->length);
 	}
 
@@ -654,7 +654,7 @@ void delete_tx_item_from_queue(void)
 }
 
 
-int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
+int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length)
 {
 	int ret = 0;
 	static struct inv_esb_payload tx_payload;
@@ -662,8 +662,14 @@ int inv_esb_package_enqueue(uint8_t *buf, uint32_t length)
 		LOG_ERR("Payload length %d exceeds maximum %d", length, MAX_PAYLOAD_SIZE);
 		return -EMSGSIZE;
 	}
-	memcpy(tx_payload.data, buf, length);
-	tx_payload.length = length;
+
+	tx_payload.data[0] = idx & 0xFF;  // Set the first byte as the index
+	tx_payload.data[1] = (idx >> 8) & 0xFF; // Set the second byte as the index high byte
+	tx_payload.data[2] = (idx >> 16) & 0xFF; // Set the third byte as the index high byte
+	tx_payload.data[3] = (idx >> 24) & 0xFF; // Set the fourth byte as the index high byte
+
+	memcpy(&tx_payload.data[4], buf, length);
+	tx_payload.length = length + 4;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
 	if (ret)  {
 		LOG_INF("Audio message queue is full");

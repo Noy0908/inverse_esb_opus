@@ -204,17 +204,17 @@ void esb_buffer_handle(void)
 		// uint8_t pcm_index = 0;
 		int frame_size = 0;
 		uint8_t devID = rx_payload.dev_id;
-
+		uint32_t packet_id = rx_payload.data[0] | (rx_payload.data[1] << 8) | (rx_payload.data[2] << 16) | (rx_payload.data[3] << 24);
         // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
 		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
 
 		frame_size = opus_decode(m_opus_decoder_state, 
-								rx_payload.data, 
+								&rx_payload.data[4], 
 								CONFIG_AUDIO_FRAME_SIZE_BYTES, 
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 																			
-		LOG_INF("%d--%d", devID, frame_size);
+		LOG_INF("%d--%d", packet_id, frame_size);
 	#if 0		
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
