@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "radio.h"
-#include "radio_config.h"
+#include "radio_config_4ms.h"
 
 #include <hal/nrf_radio.h>
 // #include <hal/nrf_timer.h>
@@ -681,10 +681,10 @@ int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length)
 
 static void rtc_periph_event_handler(void)
 {	
-	if (m_radio_state != IDLE_STATE) {
-		m_radio_state = IDLE_STATE;
-		NRF_RADIO->TASKS_DISABLE = 1;
-	} 
+	// if (m_radio_state != IDLE_STATE) {
+	// 	m_radio_state = IDLE_STATE;
+	// 	NRF_RADIO->TASKS_DISABLE = 1;
+	// } 
 
 	if (rx_state== RX_OPERATE)
 	{
@@ -710,7 +710,7 @@ static void rtc_periph_event_handler(void)
 		gpio_pin_set(dbg_port, PIN_DATA_RX, 1);
 #endif
 		
-		// radio_grtc_compare1_set(PERIPH_TIMER_SCAN_US);
+		radio_grtc_compare1_set(PERIPH_TIMER_SCAN_US);
 		m_radio_state = PERIPH_RX_STATE;				
    }
    else if (rx_state== RX_SEARCH)
@@ -1056,7 +1056,7 @@ int radio_setup(const radio_init_t *init)
 	base_addr_fill_in();
     NRF_RADIO->PACKETPTR    = (uint32_t)dma_buf;
 
-	radio_set_tx_power(RADIO_TX_POWER_0DBM);
+	radio_set_tx_power(RADIO_TX_POWER_4DBM);
 
 	NRF_RADIO->TXADDRESS	= 0;		//to transmit at pipe 0
 	NRF_RADIO->RXADDRESSES	= 0x01;		//turn on pipe 0 only to receive

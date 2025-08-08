@@ -85,7 +85,7 @@
 
 // <o> Complexity <0-10>
 // <i> A number from range 0-10. Higher complexity assures better quality but also higher CPU and memory resources consumption.
-#define CONFIG_OPUS_COMPLEXITY 2
+#define CONFIG_OPUS_COMPLEXITY 3
 
 // <o> Audio Frame Size
 // <i> CELT supports 5 ms - 40 ms audio frames. SILK provides support for 10 ms - 60 ms frame sizes.
