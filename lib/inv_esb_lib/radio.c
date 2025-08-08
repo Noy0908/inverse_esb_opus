@@ -672,7 +672,7 @@ int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length)
 	tx_payload.length = length + 4;
 	ret = k_msgq_put(&m_msgq_tx_payloads, &tx_payload, K_NO_WAIT);
 	if (ret)  {
-		LOG_INF("Audio message queue is full");
+		// LOG_INF("Audio message queue is full");
 		return -ENOMEM;
 	}
 	return ret;
@@ -1056,7 +1056,7 @@ int radio_setup(const radio_init_t *init)
 	base_addr_fill_in();
     NRF_RADIO->PACKETPTR    = (uint32_t)dma_buf;
 
-	radio_set_tx_power(RADIO_TX_POWER_4DBM);
+	radio_set_tx_power(RADIO_TX_POWER_0DBM);
 
 	NRF_RADIO->TXADDRESS	= 0;		//to transmit at pipe 0
 	NRF_RADIO->RXADDRESSES	= 0x01;		//turn on pipe 0 only to receive

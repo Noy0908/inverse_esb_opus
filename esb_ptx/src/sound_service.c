@@ -105,7 +105,7 @@ static void mic_data_handle(void *, void *, void *)
 
 K_THREAD_DEFINE(sound_service, SOUND_STACK_SIZE,
                 mic_data_handle, NULL, NULL, NULL,
-                K_PRIO_PREEMPT(7), 0, 0);
+                K_PRIO_PREEMPT(3), 0, 0);
 
 
 extern void turn_on_off_led(uint8_t idx, bool onOff);
