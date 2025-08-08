@@ -52,7 +52,7 @@
 #define RF_CHAN_TAB_SIZE			               8
 
 
-#define RADIO_RTC_EVENT_TICKS		               4900   // 5000us, 1us per tick
+#define RADIO_RTC_EVENT_TICKS		               5050   // 5050us, 1us per tick
 
 #define CENTRAL_TIMER_SCAN_US		               4500 //4500us, 1 us per tick		==
 #define PERIPH_TIMER_SCAN_US		               900 //5000us, 1 us per tick			
