@@ -7,7 +7,7 @@
 #include <string.h>
 
 #include "radio.h"
-#include "radio_config.h"
+#include "radio_config_5ms.h"
 
 #include <hal/nrf_radio.h>
 #include <hal/nrf_timer.h>

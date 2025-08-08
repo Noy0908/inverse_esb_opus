@@ -119,8 +119,9 @@ static void handle_audio_data(const struct device *dev)
 	else
 	{
 		// LOG_ERR("Both audio buffers are NULL");
-		net_buf_unref(buf_out);
-		return;
+		// net_buf_unref(buf_out);
+		// return;
+		memset(buf_out->data, 0, buf_out->size);
 	}
 
 	data_out_size =  buf_out->size;
@@ -205,7 +206,7 @@ void esb_buffer_handle(void)
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 
-		LOG_INF("%d--%d", packet_id, frame_size);
+		// LOG_INF("%d--%d", packet_id, frame_size);
 		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)	
 		{															
 			// LOG_INF("%d--%d: 0x%02x, 0x%02x, 0x%02x, 0x%02x", rx_payload.length, frame_size, rx_payload.data[0],rx_payload.data[1],

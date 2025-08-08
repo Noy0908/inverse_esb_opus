@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "../../lib/inv_esb_lib/radio.h"
-#include "../../lib/inv_esb_lib/radio_config.h"
+#include "../../lib/inv_esb_lib/radio_config_5ms.h"
 #include "opus.h"
 #include "opus_application_config.h"
 

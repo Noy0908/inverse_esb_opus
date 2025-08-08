@@ -6,7 +6,7 @@
 
 #include "nrfx_timer.h"
 
-#include "radio_config.h"
+#include "radio_config_5ms.h"
 
 #define MAX_SUBEVTS		1
 

@@ -26,8 +26,7 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 #include "mic_work_event.h"
 #include "sound_service.h"
 #include "esb_handler.h"
-// #include "../../lib/inv_esb_lib/radio.h"
-// #include "../../lib/inv_esb_lib/radio_config.h"
+
 
 LOG_MODULE_REGISTER(main, CONFIG_ESB_BT_LOG_LEVEL);
 
