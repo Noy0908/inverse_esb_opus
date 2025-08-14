@@ -9,7 +9,6 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
 #include "drv_mic.h"
-// #include "../../../lib/adpcm_lib/dvi_adpcm.h"
 
 LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
 
@@ -21,33 +20,7 @@ LOG_MODULE_REGISTER(dmic_driver, CONFIG_ESB_BT_LOG_LEVEL);
 K_MEM_SLAB_DEFINE_STATIC(mem_slab, MAX_BLOCK_SIZE , BLOCK_COUNT, 4);
 
 
-// static const struct gpio_dt_spec mic_power = GPIO_DT_SPEC_GET(DT_NODELABEL(mic_pwr), enable_gpios);
-
 static const struct device * dmic_dev = DEVICE_DT_GET(DT_NODELABEL(dmic_dev));
-
-
-// static void mic_power_on(void)
-// {
-//     uint32_t ret;
-
-// 	ret = gpio_pin_set(mic_power.port, mic_power.pin, 1);
-// 	if (ret < 0) {
-// 		LOG_ERR("Failed to power on the micphone: %d!", ret);
-// 		return ;
-// 	}
-// }
-
-
-// static void mic_power_off(void)
-// {
-//     uint32_t ret;
-
-//     ret = gpio_pin_set(mic_power.port, mic_power.pin, 0);
-// 	if (ret < 0) {
-// 		LOG_ERR("Failed to power off the micphone: %d!", ret);
-// 		return ;
-// 	}
-// }
 
 
 int drv_audio_init(void)
@@ -59,10 +32,6 @@ int drv_audio_init(void)
 		return -1;
 	}
 
-	// if (!gpio_is_ready_dt(&mic_power)) {
-	// 	LOG_ERR("The micphone goio pin is not enable!!!!");
-	// 	return -1;
-	// }
 
 	struct pcm_stream_cfg stream = {
 		.pcm_width = SAMPLE_BIT_WIDTH,
@@ -85,9 +54,10 @@ int drv_audio_init(void)
 		},
 	};
 
-	cfg.channel.req_num_chan = 1;
+	cfg.channel.req_num_chan = 2;
 	cfg.channel.req_chan_map_lo =
-		dmic_build_channel_map(0, 0, PDM_CHAN_LEFT);
+		dmic_build_channel_map(0, 0, PDM_CHAN_LEFT) | 
+		dmic_build_channel_map(1, 0, PDM_CHAN_RIGHT);
 	cfg.streams[0].pcm_rate = MAX_SAMPLE_RATE;
 	cfg.streams[0].block_size =
 		BLOCK_SIZE(cfg.streams[0].pcm_rate, cfg.channel.req_num_chan);
@@ -100,8 +70,6 @@ int drv_audio_init(void)
 	LOG_INF("PCM output rate: %u, channels: %u",
 		cfg.streams[0].pcm_rate, cfg.channel.req_num_chan);
 
-	// dvi_adpcm_init_state(&adpcm_state);			//for test
-
 	return 0;
 }
 
@@ -112,8 +80,6 @@ int drv_mic_start(void)
     int ret;
 
     LOG_INF("m_audio: Enabled\r\n");
-
-    // mic_power_on();
 
 	ret = dmic_trigger(dmic_dev, DMIC_TRIGGER_START);
 	if (ret < 0) {
@@ -135,7 +101,6 @@ int drv_mic_stop(void)
 		LOG_ERR("STOP m_audio failed: %d", ret);
 	}
 
-    // mic_power_off();
 
     return ret;
 }
@@ -163,34 +128,4 @@ void free_audio_memory(void *buffer)
 	k_mem_slab_free(&mem_slab, buffer);
 }
 
-/** just for test*/
-
-int test_pdm_transfer(size_t block_count)
-{
-	int ret = 0;
-
-	for (int i = 0; i < block_count; ++i) {
-		void *buffer;
-		uint32_t size;
-		// int frame_size;
-	    // uint8_t frame_buf[MAX_BLOCK_SIZE] = {0};
-
-		ret = dmic_read(dmic_dev, 0, &buffer, &size, 1000);
-		if (ret < 0) {
-			LOG_ERR("%d - read failed: %d", i, ret);
-			return ret;
-		}
-
-		LOG_INF("%d - got buffer %p of %u bytes", i, buffer, size);
-		LOG_HEXDUMP_INF(buffer,200,"PCM data");
-
-		// dvi_adpcm_encode(buffer, size, frame_buf, &frame_size,&adpcm_state, true);
-		// LOG_INF("ADPCM buffer %u bytes", frame_size);
-		// LOG_HEXDUMP_INF(frame_buf,frame_size,"ADPCM data");
-
-		k_mem_slab_free(&mem_slab, buffer);
-	}
-
-	return ret;
-}
 

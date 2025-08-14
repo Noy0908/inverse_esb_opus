@@ -67,7 +67,7 @@
 
 
 /** timeslot for one peripheral */
-#define PERIPH_TIMER_TX_DELAY_PERIOD		      400  //us
+#define PERIPH_TIMER_TX_DELAY_PERIOD		      800  //us
 
 #define CENTRAL_PKT_SIZE			               2
 

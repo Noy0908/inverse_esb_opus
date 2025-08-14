@@ -11,10 +11,10 @@
 #define BLOCK_SIZE(_sample_rate, _number_of_channels) \
 	(BYTES_PER_SAMPLE * (_sample_rate / 100) * _number_of_channels)
 
-#define MAX_BLOCK_SIZE      BLOCK_SIZE(MAX_SAMPLE_RATE, 1)
+#define MAX_BLOCK_SIZE      BLOCK_SIZE(MAX_SAMPLE_RATE, 2)
 
 #define BLOCK_COUNT         100
-// #define BLOCK_COUNT         8
+
 
 /**@brief Compressed audio frame representation.
  */
@@ -29,7 +29,7 @@ uint32_t read_audio_data(void **buffer, int32_t timeout);
 
 void free_audio_memory(void *buffer);
 
-int test_pdm_transfer(size_t block_count);
+
 
 
 #endif

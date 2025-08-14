@@ -9,14 +9,14 @@
 
 LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 
-#define SOUND_STACK_SIZE        20480
+#define SOUND_STACK_SIZE        30720
 #define SOUND_PRIORITY          5
 
 /* Milliseconds to wait for a block to be read. */
 #define READ_TIMEOUT            1000
 
 /** opus variables and functions */
-#define OPUS_ENCODER_SIZE   7180
+#define OPUS_ENCODER_SIZE   11924
 
 
 __ALIGN(4) static uint8_t m_opus_encoder[OPUS_ENCODER_SIZE];

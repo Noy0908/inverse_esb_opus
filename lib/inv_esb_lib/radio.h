@@ -14,7 +14,7 @@
 
 
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	(40 + 4) // 40 bytes payload + 4 byte packet index
+#define MAX_PAYLOAD_SIZE	(80 + 4) // 80 bytes payload + 4 byte packet index
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 

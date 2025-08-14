@@ -1,7 +1,7 @@
 menuconfig MULTIACK_RADIO
 	bool "Multiack Radio"	
-	select NRFX_PPI if HAS_HW_NRF_PPI
-	select NRFX_DPPI if HAS_HW_NRF_DPPIC
+	# select NRFX_PPI if HAS_HW_NRF_PPI
+	# select NRFX_DPPI if HAS_HW_NRF_DPPIC
 	default n
 	help
 	  Enable MULTIACK_RADIO functionality.
