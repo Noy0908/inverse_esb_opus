@@ -12,10 +12,10 @@
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 
-#define AUDIO_HANDLE_STACK_SIZE        	20480
+#define AUDIO_HANDLE_STACK_SIZE        	30720
 #define AUDIO_HANDLE_PRIORITY          	3
 
-#define OPUS_DECODER_SIZE   			9224
+#define OPUS_DECODER_SIZE   			17944
 
 
 NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_STEREO, 8, net_buf_destroy);
@@ -23,15 +23,11 @@ NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_
 K_MSGQ_DEFINE(esb_queue1, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
 K_MSGQ_DEFINE(esb_queue2, PCM_BLOCK_SIZE, PCM_BLOCK_COUNT, 4);
 
-// static const struct device *const mic_dev = DEVICE_DT_GET_ONE(usb_audio_mic);
-
 /******************************** opus decoder variables ******************************************/
 static uint8_t m_opus_channels   = CONFIG_OPUS_CHANNELS;
 __ALIGN(4) static uint8_t m_opus_decoder[OPUS_DECODER_SIZE];
 static OpusDecoder * const m_opus_decoder_state = (OpusDecoder *)m_opus_decoder;
 
-/** this pointer variable used for transport the message queue to USB audio thread.*/
-// void *block_ptr = NULL;
 
 extern struct k_msgq m_msgq_rx_payloads;
 
@@ -197,11 +193,11 @@ void esb_buffer_handle(void)
 {
     // int err = 0;
     struct inv_esb_payload rx_payload;
-	int16_t block_ptr[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
+	int16_t block_ptr[PCM_FRAME_BYTES];
 
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-		// uint8_t pcm_index = 0;
+		// uint16_t pcm_index = 0;
 		int frame_size = 0;
 		uint8_t devID = rx_payload.dev_id;
 		uint32_t packet_id = rx_payload.data[0] | (rx_payload.data[1] << 8) | (rx_payload.data[2] << 16) | (rx_payload.data[3] << 24);
@@ -219,7 +215,7 @@ void esb_buffer_handle(void)
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
-			while(pcm_index + FRAME_SIZE <= frame_size )
+			while(pcm_index + FRAME_SIZE <= frame_size * 2) )
 			{
 				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
 				if(!err)
@@ -236,7 +232,7 @@ void esb_buffer_handle(void)
 		}
 		else if(devID == 2)
 		{	
-			while(pcm_index + FRAME_SIZE <= frame_size)
+			while(pcm_index + FRAME_SIZE <= frame_size * 2)
 			{
 				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);			
 				if(!err)
