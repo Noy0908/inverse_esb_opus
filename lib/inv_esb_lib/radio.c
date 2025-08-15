@@ -13,16 +13,7 @@
 #include "radio_config_5ms.h"
 
 #include <hal/nrf_radio.h>
-// #include <hal/nrf_timer.h>
 #include <hal/nrf_grtc.h>
-// #include <helpers/nrfx_gppi.h>
-
-// #if defined(DPPI_PRESENT)
-// #include <nrfx_dppi.h>
-// #else
-// #include <nrfx_ppi.h>
-// #endif
-// #include <nrfx_timer.h>
 
 LOG_MODULE_REGISTER(radio, CONFIG_APP_LOG_LEVEL);
 

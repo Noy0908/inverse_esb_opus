@@ -22,7 +22,7 @@
 // <i> Note: When using Keil, use the option "Rebuild all target files" to change stack size between CELT/SILK.
 //  <1=>CELT Only
 //  <2=>SILK Only
-#define CONFIG_OPUS_MODE 1
+#define CONFIG_OPUS_MODE 2
 
 
 // <o> Bit Rate
