@@ -69,12 +69,10 @@ static void handle_audio_data(const struct device *dev)
 	static uint32_t timeCount = 0;
 
     int ret = 0;
-    // void *frame_buffer1 = NULL;
-	// void *frame_buffer2 = NULL;
 	volatile bool channel1_flag = false;
 	volatile bool channel2_flag = false;
-	int16_t frame_buffer1[FRAME_SIZE] = {0};
-	int16_t frame_buffer2[FRAME_SIZE] = {0};
+	// int16_t frame_buffer1[FRAME_SIZE] = {0};
+	// int16_t frame_buffer2[FRAME_SIZE] = {0};
     size_t data_out_size = 0;
      
     struct net_buf *buf_out;
@@ -121,7 +119,7 @@ static void handle_audio_data(const struct device *dev)
 #endif
 	if(!channel1_flag && !channel2_flag)
 	{
-		// LOG_ERR("Both audio buffers are NULL");
+		LOG_ERR("Both audio buffers are NULL");
 		// net_buf_unref(buf_out);
 		// return;
 		memset(buf_out->data, 0, buf_out->size);
@@ -209,7 +207,7 @@ void esb_buffer_handle(void)
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 
-		LOG_INF("%d--%d", packet_id, frame_size);
+		// LOG_INF("%d--%d", packet_id, frame_size);
 		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)	
 		{															
 			// LOG_INF("%d--%d: 0x%02x, 0x%02x, 0x%02x, 0x%02x", rx_payload.length, frame_size, rx_payload.data[0],rx_payload.data[1],
