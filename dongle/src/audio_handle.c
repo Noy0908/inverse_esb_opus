@@ -12,10 +12,10 @@
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
 
-#define AUDIO_HANDLE_STACK_SIZE        	20480
+#define AUDIO_HANDLE_STACK_SIZE        	30720
 #define AUDIO_HANDLE_PRIORITY          	3
 
-#define OPUS_DECODER_SIZE   			9224
+#define OPUS_DECODER_SIZE   			17944
 
 
 NET_BUF_POOL_FIXED_DEFINE(pool_out, CONFIG_FIFO_FRAME_SPLIT_NUM, USB_FRAME_SIZE_STEREO, 8, net_buf_destroy);
@@ -86,15 +86,16 @@ static void handle_audio_data(const struct device *dev)
 		// return;
 	}
 
-    if(k_msgq_get(&esb_queue1, frame_buffer1, K_NO_WAIT) == 0)
+    if(k_msgq_get(&esb_queue1, (int16_t*)buf_out->data, K_NO_WAIT) == 0)
     {
         channel1_flag = true;
     }
-	if(k_msgq_get(&esb_queue2, frame_buffer2, K_NO_WAIT) == 0)
+	else if(k_msgq_get(&esb_queue2, (int16_t*)buf_out->data, K_NO_WAIT) == 0)
     {
         channel2_flag = true;
     }
    
+#if 0
     // LOG_HEXDUMP_INF(frame_buffer1, 8, "Receive audio queue");
 	if(channel1_flag && channel2_flag)
 	{
@@ -117,6 +118,8 @@ static void handle_audio_data(const struct device *dev)
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
+#endif
+	if(!channel1_flag && !channel2_flag)
 	{
 		// LOG_ERR("Both audio buffers are NULL");
 		// net_buf_unref(buf_out);
@@ -186,13 +189,13 @@ void esb_buffer_handle(void)
 {
     int err = 0;
     struct inv_esb_payload rx_payload;
-	int16_t block_ptr[CONFIG_AUDIO_FRAME_SIZE_SAMPLES];
+	int16_t block_ptr[PCM_FRAME_BYTES];
 	// 1ms buffer
-    int16_t slice_buf[FRAME_SIZE];
+    // int16_t slice_buf[FRAME_SIZE];
 
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
-		uint8_t pcm_index = 0;
+		uint16_t pcm_index = 0;
 		int frame_size = 0;
 		uint8_t devID = rx_payload.dev_id;
 		uint32_t packet_id = rx_payload.data[0] | (rx_payload.data[1] << 8) | (rx_payload.data[2] << 16) | (rx_payload.data[3] << 24);
@@ -206,21 +209,20 @@ void esb_buffer_handle(void)
 								block_ptr, 
 								CONFIG_AUDIO_FRAME_SIZE_SAMPLES, 0);
 
-		// LOG_INF("%d--%d", packet_id, frame_size);
+		LOG_INF("%d--%d", packet_id, frame_size);
 		if(frame_size != CONFIG_AUDIO_FRAME_SIZE_SAMPLES)	
 		{															
 			// LOG_INF("%d--%d: 0x%02x, 0x%02x, 0x%02x, 0x%02x", rx_payload.length, frame_size, rx_payload.data[0],rx_payload.data[1],
 			// 		rx_payload.data[MAX_PAYLOAD_SIZE-2],rx_payload.data[MAX_PAYLOAD_SIZE-1]);
 			return;
 		}
-	
+	#if 1
 		/** send the PCM data to USB audio driver*/
 		if(devID == 1)
 		{
-			while(pcm_index + FRAME_SIZE <= frame_size )
+			while(pcm_index + FRAME_SIZE <= frame_size * 2) // 2 channels
 			{
-				memcpy(slice_buf, &block_ptr[pcm_index], FRAME_SIZE * sizeof(int16_t));
-				err = k_msgq_put(&esb_queue1, slice_buf, K_FOREVER);
+				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_FOREVER);
 				if(!err)
 				{
 					pcm_index += FRAME_SIZE;
@@ -235,7 +237,7 @@ void esb_buffer_handle(void)
 		}
 		else if(devID == 2)
 		{	
-			while(pcm_index + FRAME_SIZE <= frame_size)
+			while(pcm_index + FRAME_SIZE <= frame_size * 2) // 2 channels
 			{
 				err = k_msgq_put(&esb_queue2, &block_ptr[pcm_index], K_NO_WAIT);			
 				if(!err)
@@ -254,6 +256,7 @@ void esb_buffer_handle(void)
 		{
 			err = -EINVAL;
 		}
+	#endif
     } 
     else 
     {
