@@ -60,7 +60,7 @@
 //      Bit 0:  0 = VBR/CVBR
 //              1 = CBR
 //
-#define CONFIG_OPUS_BITRATE_CFG 32001
+#define CONFIG_OPUS_BITRATE_CFG 64001
 
 // <o> Bit Rate Limit
 // <i> Set a bit rate limit that cannot be exceeded during the transmission. Must be equal or higher than the configured bit rate.
@@ -81,7 +81,7 @@
 //  <144000=>144 kbit/s
 //  <160000=>160 kbit/s
 //  <256000=>256 kbit/s
-#define CONFIG_OPUS_BITRATE_LIMIT 32000
+#define CONFIG_OPUS_BITRATE_LIMIT 64000
 
 // <o> Complexity <0-10>
 // <i> A number from range 0-10. Higher complexity assures better quality but also higher CPU and memory resources consumption.
@@ -114,7 +114,7 @@
 #if (defined(CONFIG_AUDIO_FRAME_SIZE_SAMPLES) && !defined(CONFIG_AUDIO_FRAME_SIZE_MS))
 # define CONFIG_AUDIO_FRAME_SIZE_MS (1000 * CONFIG_AUDIO_FRAME_SIZE_SAMPLES / CONFIG_AUDIO_SAMPLING_FREQUENCY)
 #elif (defined(CONFIG_AUDIO_FRAME_SIZE_MS) && !defined(CONFIG_AUDIO_FRAME_SIZE_SAMPLES))
-# define CONFIG_AUDIO_FRAME_SIZE_SAMPLES (CONFIG_AUDIO_FRAME_SIZE_MS * CONFIG_AUDIO_SAMPLING_FREQUENCY / 1000 * CONFIG_OPUS_CHANNELS)
+# define CONFIG_AUDIO_FRAME_SIZE_SAMPLES (CONFIG_AUDIO_FRAME_SIZE_MS * CONFIG_AUDIO_SAMPLING_FREQUENCY / 1000)
 #else
 # error "Either CONFIG_AUDIO_FRAME_SIZE_SAMPLES or CONFIG_AUDIO_FRAME_SIZE_MS has to be defined!"
 #endif

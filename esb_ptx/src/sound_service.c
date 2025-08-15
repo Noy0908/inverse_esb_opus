@@ -65,12 +65,11 @@ static void mic_data_handle(void *, void *, void *)
 
     while(1)
     {
-	#if 1
         int frame_size;
 		uint8_t frame_buf[CONFIG_AUDIO_FRAME_SIZE_BYTES] = {0};
 
         size = read_audio_data(&buffer, READ_TIMEOUT);
-        if(size == CONFIG_AUDIO_FRAME_SIZE_SAMPLES * BYTES_PER_SAMPLE)
+        if(size == CONFIG_AUDIO_FRAME_SIZE_SAMPLES * BYTES_PER_SAMPLE * CONFIG_OPUS_CHANNELS)
         {	
 			frame_size = opus_encode(
 									m_opus_encoder_state,
@@ -93,11 +92,11 @@ static void mic_data_handle(void *, void *, void *)
 	
             free_audio_memory(buffer);
 		}
-		else{
+		else
+		{
 			LOG_ERR("Read audio data failed, size = %d", size);
 			free_audio_memory(buffer);
 		}
-	#endif
     }
 }
 
