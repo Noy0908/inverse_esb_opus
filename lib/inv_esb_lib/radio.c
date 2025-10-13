@@ -336,7 +336,7 @@ __INLINE static int radio_grtc_compare0_set(uint32_t value_us)
 			LOG_ERR("Failed to allocate GRTC channel, chan=%d\n", channel1);
 		}
 		LOG_INF("Allocated GRTC channel %d\n", channel1);
-	}
+	} 
 
 	delay_value1 = value_us;
 
