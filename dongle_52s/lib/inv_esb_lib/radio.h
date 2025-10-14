@@ -6,23 +6,22 @@
 
 #include "nrfx_timer.h"
 
-#include "radio_config_2ms.h"
+#include "radio_config.h"
 
 #define MAX_SUBEVTS		1
 
 #define MAX_PERIPHS		2
 
-
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	(20 + 4) // 80 bytes payload + 4 byte packet index
+#define MAX_PAYLOAD_SIZE	(20 + 4) // 20 bytes for Opus payload + 4 bytes for packet ID
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
 #define MAX_PACKET_LENGTH	(PERIPH_BM_SIZE + MAX_PAYLOAD_SIZE)
 
-// #define	RADIO_RTC			NRF_RTC0
+#define	RADIO_RTC			NRF_RTC0
 
-// #define RADIO_RTC_IRQn		RTC0_IRQn
+#define RADIO_RTC_IRQn		RTC0_IRQn
 
 
 typedef enum
@@ -60,7 +59,7 @@ typedef enum {
     RADIO_TX_POWER_NEG12DBM = RADIO_TXPOWER_TXPOWER_Neg12dBm, /**< -12 dBm radio transmit power. */
     RADIO_TX_POWER_NEG16DBM = RADIO_TXPOWER_TXPOWER_Neg16dBm, /**< -16 dBm radio transmit power. */
     RADIO_TX_POWER_NEG20DBM = RADIO_TXPOWER_TXPOWER_Neg20dBm, /**< -20 dBm radio transmit power. */
-    RADIO_TX_POWER_NEG28DBM = RADIO_TXPOWER_TXPOWER_Neg28dBm, /**< -30 dBm radio transmit power. */
+    RADIO_TX_POWER_NEG30DBM = RADIO_TXPOWER_TXPOWER_Neg30dBm, /**< -30 dBm radio transmit power. */
     RADIO_TX_POWER_NEG40DBM = RADIO_TXPOWER_TXPOWER_Neg40dBm  /**< -40 dBm radio transmit power. */
 } radio_power_t;
 
@@ -105,7 +104,6 @@ struct inv_esb_payload {
     uint8_t dev_id; /**< Device ID, used to identify the device that sent the packet. */
 	uint8_t length; /**< Length of the packet when not in DPL mode. */
 	uint8_t data[MAX_PAYLOAD_SIZE]; /**< The payload data and devID. */
-    // uint32_t index; /**< Packet index, used to identify the packet. */
 };
 
 typedef void (*event_callback_t ) (radio_evt_t const * p_event);

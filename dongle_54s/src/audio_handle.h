@@ -18,13 +18,13 @@
 
 
 
-/* Size of a block for 10 ms of audio data. */
+/* Size of a block for 1 ms of audio data. */
 #define BLOCK_SIZE(_sample_rate, _number_of_ms) \
 	(BYTES_PER_SAMPLE * (_sample_rate / 1000) * _number_of_ms)
 
 
-#define PCM_BLOCK_SIZE				BLOCK_SIZE(MAX_SAMPLE_RATE, 2) 			// 1 ms
-#define FRAME_SIZE                  ((MAX_SAMPLE_RATE / 1000) * 2)
+#define PCM_BLOCK_SIZE				BLOCK_SIZE(MAX_SAMPLE_RATE, 1) 			// 1 ms
+#define FRAME_SIZE                  (MAX_SAMPLE_RATE / 1000)
 #define PCM_FRAME_BYTES 			(CONFIG_AUDIO_FRAME_SIZE_SAMPLES * CONFIG_OPUS_CHANNELS)
 
 #define PCM_BLOCK_COUNT             100
