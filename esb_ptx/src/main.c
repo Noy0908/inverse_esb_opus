@@ -160,7 +160,7 @@ int main(void)
 
 	inverse_esb_init();
 
-	NRF_POWER->TASKS_CONSTLAT = 1; // Enable constant latency mode
+	// NRF_POWER->TASKS_CONSTLAT = 1; // Enable constant latency mode
 
 	LOG_INF("ESB BLE Multiprotocol Example, version is %s!\r\n",FW_VERSION);
 	LOG_INF("Main thread priority is %d!\r\n",k_thread_priority_get(k_current_get()));
