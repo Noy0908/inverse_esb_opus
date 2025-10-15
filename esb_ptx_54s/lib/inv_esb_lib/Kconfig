@@ -1,7 +1,7 @@
 menuconfig MULTIACK_RADIO
 	bool "Multiack Radio"	
-	select NRFX_PPI if HAS_HW_NRF_PPI
-	select NRFX_DPPI if HAS_HW_NRF_DPPIC
+	# select NRFX_PPI if HAS_HW_NRF_PPI
+	# select NRFX_DPPI if HAS_HW_NRF_DPPIC
 	default n
 	help
 	  Enable MULTIACK_RADIO functionality.
@@ -60,6 +60,16 @@ config RADIO_SYS_TIMER4
 	depends on HAS_HW_NRF_TIMER4
 	select NRFX_TIMER4
 
+config RADIO_SYS_TIMER10
+	bool "TIMER10"
+	depends on $(dt_nodelabel_has_compat,timer10,$(DT_COMPAT_NORDIC_NRF_TIMER))
+	select NRFX_TIMER10
+
+config RADIO_SYS_TIMER020
+	bool "TIMER020"
+	depends on $(dt_nodelabel_has_compat,timer020,$(DT_COMPAT_NORDIC_NRF_TIMER))
+	select NRFX_TIMER020
+
 endchoice
 
 config RADIO_TIMER_INSTANCE
@@ -69,7 +79,8 @@ config RADIO_TIMER_INSTANCE
 	default 2 if RADIO_SYS_TIMER2
 	default 3 if RADIO_SYS_TIMER3
 	default 4 if RADIO_SYS_TIMER4
-	default 0
+	default 10 if RADIO_SYS_TIMER10
+	default 20 if RADIO_SYS_TIMER020
 
 config APP_LOG_LEVEL
 	int "Log level for multiack central sample"

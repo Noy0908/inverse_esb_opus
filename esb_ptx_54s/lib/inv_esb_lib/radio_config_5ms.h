@@ -33,12 +33,12 @@
 #define PIN_DBG_02             5
 #define PIN_DBG_03             4
 #else
-#define PIN_CHANNEL_HOP       31 // indicate channel hopping when it is toggled
-#define PIN_DATA_RX           30 // indicate data is received
-#define PIN_DATA_TX           29 // indicate ack data is sent
-#define PIN_DBG_01            28
-#define PIN_DBG_02             4
-#define PIN_DBG_03             3
+#define PIN_CHANNEL_HOP       0 // indicate channel hopping when it is toggled
+#define PIN_DATA_RX           1 // indicate data is received
+#define PIN_DATA_TX           2 // indicate ack data is sent
+#define PIN_DBG_01            3
+// #define PIN_DBG_02             4
+// #define PIN_DBG_03             3
 #endif
 
 /**
@@ -52,22 +52,22 @@
 #define RF_CHAN_TAB_SIZE			               8
 
 
-#define RADIO_RTC_EVENT_TICKS		               4   // 2ms, 0.5ms per tick
-			
+#define RADIO_RTC_EVENT_TICKS		               5050   // 5050us, 1us per tick
 
-#define CENTRAL_TIMER_SCAN_US		               1500 //1.5ms, 1 us per tick		
-#define PERIPH_TIMER_SCAN_US		               3000 //2ms, 1 us per tick			
+#define CENTRAL_TIMER_SCAN_US		               4500 //4500us, 1 us per tick		==
+#define PERIPH_TIMER_SCAN_US		               900 //5000us, 1 us per tick			
 
-#define RTC_ADJ						               1
+#define RTC_ADJ						               400
 
 
 #define PERIPH_RTC_RX_OPERATE_PERIOD		      RADIO_RTC_EVENT_TICKS
-#define PERIPH_RTC_RX_SEARCH_PERIOD			      PERIPH_RTC_RX_OPERATE_PERIOD* (RF_CHAN_TAB_SIZE +1)
-#define PERIPH_RTC_RX_OPERATE_ADJ_PERIOD	      PERIPH_RTC_RX_OPERATE_PERIOD - RTC_ADJ
+#define PERIPH_RTC_RX_SEARCH_PERIOD			      RADIO_RTC_EVENT_TICKS* (RF_CHAN_TAB_SIZE +1)
+#define PERIPH_RTC_RX_OPERATE_ADJ_PERIOD	      RADIO_RTC_EVENT_TICKS - RTC_ADJ
+
 
 
 /** timeslot for one peripheral */
-#define PERIPH_TIMER_TX_DELAY_PERIOD		      350  //us
+#define PERIPH_TIMER_TX_DELAY_PERIOD		      800  //us
 
 #define CENTRAL_PKT_SIZE			               2
 

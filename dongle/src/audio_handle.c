@@ -6,7 +6,6 @@
 
 #include "audio_handle.h"
 #include "esb_handle.h"
-#include "drv_flash.h"
 
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
@@ -65,22 +64,16 @@ static void handle_audio_data(const struct device *dev)
 	if (!buf_out) 
 	{
 		LOG_ERR("Failed to allocate data buffer");
-		return;
+		// return;
 	}
 
     if(k_msgq_get(&esb_queue1, &frame_buffer1, K_NO_WAIT) == 0)
     {
 		channel1_flag = true;
-        // LOG_WRN("USB audio TX underrun");
-		// net_buf_unref(buf_out);
-		// return;
     }
 	if(k_msgq_get(&esb_queue2, &frame_buffer2, K_NO_WAIT) == 0)
     {
 		channel2_flag = true;
-        // LOG_WRN("USB audio TX underrun");
-		// net_buf_unref(buf_out);
-		// return;
     }
    
     // LOG_HEXDUMP_INF(frame_buffer, 8, "Receive audio queue");
@@ -103,8 +96,9 @@ static void handle_audio_data(const struct device *dev)
 	else
 	{
 		LOG_ERR("Both audio buffers are NULL");
-		net_buf_unref(buf_out);
-		return;
+		// net_buf_unref(buf_out);
+		// return;
+		memset(buf_out->data, 0, buf_out->size);
 	}
 
 	data_out_size =  buf_out->size;
@@ -125,18 +119,6 @@ static void handle_audio_data(const struct device *dev)
 			// LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
 		}
 	} 
-	// if (data_out_size == FLASH_PAGE_SIZE) 
-    // {
-	// 	ret = soc_flash_write(total_size, buf_out->data, data_out_size);
-	// 	if (ret) {
-	// 		LOG_WRN("write flash failed, ret: %d", ret);
-	// 		net_buf_unref(buf_out);
-	// 	}
-	// 	// else
-	// 	// {	
-	// 	// 	LOG_INF("usb audio send %d bytes succeed!\t", data_out_size);
-	// 	// }
-	// } 
     else 
 #endif
     {
