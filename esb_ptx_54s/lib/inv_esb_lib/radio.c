@@ -644,7 +644,7 @@ void delete_tx_item_from_queue(void)
 	}
 }
 
-#if 0
+#if 1
 int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length)
 {
 	int ret = 0;

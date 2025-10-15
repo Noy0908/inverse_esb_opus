@@ -45,6 +45,12 @@ static int received_esb_package_enqueue(uint8_t devID, const uint8_t *buf, uint3
 {
 	int ret = 0;
 	static struct inv_esb_payload rx_payload;
+
+	if (length > MAX_PAYLOAD_SIZE) {
+		LOG_ERR("Payload length %d exceeds maximum %d", length, MAX_PAYLOAD_SIZE);
+		return -EMSGSIZE;
+	}
+
 	rx_payload.dev_id = devID;
 	memcpy(rx_payload.data, buf, length);
 	rx_payload.length = length;
@@ -120,11 +126,17 @@ void esb_buffer_handle(void)
 	if(k_msgq_get(&m_msgq_rx_payloads, &rx_payload, K_FOREVER) == 0)
     {
 		uint8_t devID = rx_payload.dev_id;
-        // LOG_INF("Packet received[%d] from %d, 0x%02x, 0x%02x, 0x%02x, 0x%02x  ", rx_payload.length,			
-		// 		devID, rx_payload.data[0],rx_payload.data[1], rx_payload.data[2],rx_payload.data[3]);
+		uint32_t packet_id = rx_payload.data[0] | (rx_payload.data[1] << 8) | (rx_payload.data[2] << 16) | (rx_payload.data[3] << 24);
 
-		dvi_adpcm_decode(rx_payload.data, ADPCM_BLOCK_SIZE, pcm_block, &frame_size, &m_adpcm_state);
-		// LOG_INF("[%d]:adpcm_index=%d, ADPCMdecompress %u bytes", devID, adpcm_index, frame_size);
+		dvi_adpcm_decode(&rx_payload.data[4], ADPCM_BLOCK_SIZE, pcm_block, &frame_size, &m_adpcm_state);
+		if(frame_size != MAX_BLOCK_SIZE)	
+		{															
+			// LOG_INF("%d--%d: 0x%02x, 0x%02x, 0x%02x, 0x%02x", rx_payload.length, frame_size, rx_payload.data[0],rx_payload.data[1],
+			// 		rx_payload.data[MAX_PAYLOAD_SIZE-2],rx_payload.data[MAX_PAYLOAD_SIZE-1]);
+			return;
+		}
+		// LOG_INF("[%d]:packetID=%d, ADPCMdecompress %u bytes", devID, packet_id, frame_size);
+
 		if(devID == 1)
 		{
 			while(adpcm_index + FRAME_SIZE <= frame_size)

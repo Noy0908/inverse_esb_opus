@@ -18,7 +18,7 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 static bool radio_is_up;
 static dvi_adpcm_state_t    m_adpcm_state;
 
-
+static uint32_t packID = 0;
 static bool radio_is_up;
 
 
@@ -46,8 +46,8 @@ static void mic_data_handle(void *, void *, void *)
 
 			// LOG_INF("Encoded frame size: %d", frame_size);
 
-			inv_esb_package_enqueue(frame_buf, frame_size);
-		
+			inv_esb_package_enqueue(packID, frame_buf, frame_size);
+			packID++;
             free_audio_memory(buffer);
 		}
 		else
@@ -82,7 +82,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			}
 
             LOG_INF("Micphone start to work!");
-			// packID = 0;
+			packID = 0;
 			drv_mic_start();
 
 			k_thread_resume(sound_service);
@@ -97,7 +97,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			k_thread_suspend(sound_service);
 
             turn_on_off_led(0, false);
-			/** radio work longer to  send the rest audio frame */
+			/** no need to stop radio as the clock is always running */
 			// if(radio_is_up)
 			// {
 			// 	radio_stop();

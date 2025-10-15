@@ -13,6 +13,7 @@ LOG_MODULE_REGISTER(sound_service, LOG_LEVEL_INF);
 /* Milliseconds to wait for a block to be read. */
 #define READ_TIMEOUT            1000
 
+static uint32_t packID = 0;
 static bool radio_is_up;
 static dvi_adpcm_state_t    m_adpcm_state;
 
@@ -21,7 +22,7 @@ static void mic_data_handle(void *, void *, void *)
 {
     void *buffer;
 	uint32_t size;
-	static uint8_t esb_total_size = 0;
+	// static uint8_t esb_total_size = 0;
 
     dvi_adpcm_init_state(&m_adpcm_state);
 
@@ -42,9 +43,14 @@ static void mic_data_handle(void *, void *, void *)
 
 			// LOG_INF("Encoded frame size: %d", frame_size);
 
-			inv_esb_package_enqueue(frame_buf, frame_size);
-		
+			inv_esb_package_enqueue(packID, frame_buf, frame_size);
+			packID++;
             free_audio_memory(buffer);
+		}
+		else
+		{
+			LOG_ERR("Read audio data failed, size = %d", size);
+			free_audio_memory(buffer);
 		}
     }
 }
@@ -73,6 +79,7 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			}
 
             LOG_INF("Micphone start to work!");
+			packID = 0;
 			drv_mic_start();
 
 			k_thread_resume(sound_service);

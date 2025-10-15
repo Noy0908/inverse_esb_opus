@@ -14,7 +14,7 @@
 
 
 // #define MAX_PAYLOAD_SIZE	110
-#define MAX_PAYLOAD_SIZE	(40 + 3) // adpcm 4:1 compression + 3 bytes header
+#define MAX_PAYLOAD_SIZE	(40 + 3 + 4) // adpcm 4:1 compression + 3 bytes adpcm header + 4 bytes packet ID
 
 #define PERIPH_BM_SIZE	(ROUND_UP(MAX_PERIPHS, 8) / 8)
 
@@ -138,8 +138,8 @@ void increase_poll_index(void);
 
 int pull_packet_from_tx_msgq(void);
 
-// int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length);
-int inv_esb_package_enqueue(uint8_t *buf, uint32_t length);
+int inv_esb_package_enqueue(uint32_t idx, uint8_t *buf, uint32_t length);
+// int inv_esb_package_enqueue(uint8_t *buf, uint32_t length);
 
 void delete_tx_item_from_queue(void);
 
