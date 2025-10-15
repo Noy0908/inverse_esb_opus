@@ -52,13 +52,6 @@ static void mono_to_stereo(int16_t* src_audio1, int16_t* src_audio2, int frames,
     {
         dst_audio[2 * i] = src_audio1[i];
         dst_audio[2 * i + 1] = src_audio2[i];
-
-		// // 左通道（Mic1）
-		// dst_audio[i*4 + 0] = src_audio1[i] & 0xFF;        // 低字节
-		// dst_audio[i*4 + 1] = (src_audio1[i] >> 8) & 0xFF; // 高字节
-		// // 右通道（Mic2）
-		// dst_audio[i*4 + 2] = src_audio2[i] & 0xFF;
-		// dst_audio[i*4 + 3] = (src_audio2[i] >> 8) & 0xFF;
     }
 }
 
@@ -113,7 +106,7 @@ static void handle_audio_data(const struct device *dev)
 	{
 		// LOG_INF("2\n");
 		// LOG_HEXDUMP_INF(frame_buffer2, 8, "Receive audio queue");
-		// pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
+		pcm_mix((int16_t*) frame_buffer2, sizeof(frame_buffer2), (int16_t*) frame_buffer2, sizeof(frame_buffer2), B_MONO_INTO_A_MONO);
 		mono_to_stereo((int16_t*) frame_buffer2, (int16_t*) frame_buffer2, FRAME_SIZE, (int16_t*)buf_out->data);
 	}
 	else
@@ -220,14 +213,14 @@ void esb_buffer_handle(void)
 			while(pcm_index + FRAME_SIZE <= frame_size )
 			{
 				memcpy(slice_buf, &block_ptr[pcm_index], FRAME_SIZE * sizeof(int16_t));
-				err = k_msgq_put(&esb_queue1, slice_buf, K_FOREVER);
+				err = k_msgq_put(&esb_queue1, slice_buf, K_NO_WAIT);
 				if(!err)
 				{
 					pcm_index += FRAME_SIZE;
 				}
 				else
 				{
-					LOG_ERR("1[%d] Message sent error: %d", pcm_index, err);
+					// LOG_ERR("1[%d] Message sent error: %d", pcm_index, err);
 					break;
 				}
 			}
@@ -238,14 +231,14 @@ void esb_buffer_handle(void)
 			while(pcm_index + FRAME_SIZE <= frame_size)
 			{
 				memcpy(slice_buf, &block_ptr[pcm_index], FRAME_SIZE * sizeof(int16_t));
-				err = k_msgq_put(&esb_queue2, slice_buf, K_FOREVER);			
+				err = k_msgq_put(&esb_queue2, slice_buf, K_NO_WAIT);			
 				if(!err)
 				{
 					pcm_index += FRAME_SIZE;
 				}
 				else
 				{
-					LOG_ERR("2[%d] Message sent error: %d", pcm_index, err);
+					// LOG_ERR("2[%d] Message sent error: %d", pcm_index, err);
 					break;
 				}
 			}

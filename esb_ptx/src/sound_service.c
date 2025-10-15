@@ -139,13 +139,13 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 			k_thread_suspend(sound_service);
 
             turn_on_off_led(0, false);
-			/** radio work longer to  send the rest audio frame */
-			if(radio_is_up)
-			{
-				radio_stop();
-				radio_is_up = false;
-				LOG_INF("Radio stop");
-			}
+			/** radio no need to stop as the clock is always running */
+			// if(radio_is_up)
+			// {
+			// 	radio_stop();
+			// 	radio_is_up = false;
+			// 	LOG_INF("Radio stop");
+			// }
 		}
 
 		return true;
