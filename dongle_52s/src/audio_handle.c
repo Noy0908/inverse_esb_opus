@@ -7,7 +7,7 @@
 
 #include "audio_handle.h"
 #include "esb_handle.h"
-#include "drv_flash.h"
+
 
 LOG_MODULE_DECLARE(smart_dongle, CONFIG_ESB_PRX_APP_LOG_LEVEL);
 
@@ -171,7 +171,7 @@ void esb_buffer_handle(void)
 		{
 			while(pcm_index + FRAME_SIZE <= frame_size * 2) // 2 channels
 			{
-				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_FOREVER);
+				err = k_msgq_put(&esb_queue1, &block_ptr[pcm_index], K_NO_WAIT);
 				if(!err)
 				{
 					pcm_index += FRAME_SIZE;

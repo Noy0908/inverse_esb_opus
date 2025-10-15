@@ -140,12 +140,12 @@ static bool mic_work_event_handler(const struct app_event_header *aeh)
 
             turn_on_off_led(0, false);
 			/** radio work longer to  send the rest audio frame */
-			if(radio_is_up)
-			{
-				radio_stop();
-				radio_is_up = false;
-				LOG_INF("Radio stop");
-			}
+			// if(radio_is_up)
+			// {
+			// 	radio_stop();
+			// 	radio_is_up = false;
+			// 	LOG_INF("Radio stop");
+			// }
 		}
 
 		return true;

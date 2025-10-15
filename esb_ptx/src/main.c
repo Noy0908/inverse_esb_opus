@@ -31,7 +31,7 @@ MODIFIED SAMPLE TO INCLUDE EXTENSIONS ++
 LOG_MODULE_REGISTER(main, CONFIG_ESB_BT_LOG_LEVEL);
 
 
-#define FW_VERSION		"1.2.3"
+#define FW_VERSION		"1.2.0"
 
 /*
  * Get button configuration from the devicetree sw0 alias. This is mandatory.
@@ -160,25 +160,10 @@ int main(void)
 
 	inverse_esb_init();
 
-	// NRF_POWER->TASKS_CONSTLAT = 1; // Enable constant latency mode
+	NRF_POWER->TASKS_CONSTLAT = 1; // Enable constant latency mode, will increase power consumption
 
 	LOG_INF("ESB BLE Multiprotocol Example, version is %s!\r\n",FW_VERSION);
 	LOG_INF("Main thread priority is %d!\r\n",k_thread_priority_get(k_current_get()));
 
-#if 0
-	while (1) {	
-		if(debounce_is_ongoing)	
-		{
-			k_sleep(K_MSEC(100)); // debounce delay
-			debounce_is_ongoing = false;
-		}
-		else
-		{
-			k_yield(); // yield to other threads
-		}
-		// LOG_INF("Main thread is running, button_flag=%d", button_flag);
-		// k_sleep(K_SECONDS(1));
-	}
-#endif
 	return 0;
 }
